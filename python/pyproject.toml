@@ -3,7 +3,11 @@ name = "refund-bot"
 version = "0.1.0"
 description = "Refund Bot in plain Python: a support agent on a mock LLM with Postgres and Mailpit, the base for the AgentTrust tutorial."
 requires-python = ">=3.12"
-dependencies = ["psycopg[binary]>=3.2"]
+dependencies = [
+    "alembic>=1.13",
+    "psycopg[binary]>=3.2",
+    "sqlalchemy>=2.0",
+]
 
 [project.scripts]
 refund-bot = "refund_bot.__main__:main"

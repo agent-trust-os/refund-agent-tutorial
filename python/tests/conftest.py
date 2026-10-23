@@ -11,6 +11,15 @@ import pytest
 TABLES = ["actions", "refunds", "tickets", "orders", "customers"]
 
 
+@pytest.fixture
+def db():
+    """A fresh in-memory database with the starting data, for one test."""
+    from app.db.session import open_database
+
+    with open_database("sqlite://")() as session:
+        yield session
+
+
 @pytest.fixture(autouse=True)
 def _in_memory(monkeypatch):
     monkeypatch.delenv("DATABASE_URL", raising=False)

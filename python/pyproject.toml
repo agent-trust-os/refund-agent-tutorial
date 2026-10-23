@@ -3,7 +3,7 @@ name = "refund-bot"
 version = "0.1.0"
 description = "Refund Bot in plain Python: the agent loop on the shared core, the base for the AgentTrust tutorial."
 requires-python = ">=3.12"
-dependencies = ["refund-core"]
+dependencies = ["refund-core[postgres]"]
 
 [project.scripts]
 refund-bot = "refund_bot.__main__:main"

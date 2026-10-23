@@ -80,3 +80,9 @@ def test_serve_flag_starts_the_server(monkeypatch):
     monkeypatch.setattr("refund_bot.server.serve", lambda host, port: called.update(host=host, port=port))
     assert main(["--serve", "--host", "0.0.0.0", "--port", "9000"]) == 0
     assert called == {"host": "0.0.0.0", "port": 9000}
+
+
+def test_an_unreachable_database_is_a_503_not_a_fallback(base_url, monkeypatch):
+    monkeypatch.setenv("DATABASE_URL", "postgresql://x:y@127.0.0.1:1/z?connect_timeout=2")
+    status, body = post(base_url + "/run/over_limit")
+    assert status == 503 and "DATABASE_URL" in body["error"]

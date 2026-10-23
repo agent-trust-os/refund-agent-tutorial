@@ -31,7 +31,7 @@ def call_tool(fn: Callable[..., dict[str, Any]], call: ToolCall, request: str) -
 def run(scenario: Scenario, model: Model, shop: Shop, max_steps: int = 10) -> RunResult:
     """``max_steps`` is a local safety net so a looping model cannot run forever. It is not a
     governance control."""
-    tools = make_tools(shop, run_id=scenario.id)
+    tools = make_tools(shop)
     specs = [tool_spec(fn) for fn in tools.values()]
     request = f"Resolve support ticket {scenario.ticket_id}."
     messages = [Message("user", request)]

@@ -1,65 +1,83 @@
-"""The fake shop. Its ``actions`` log is the proof of what really ran, independent of what the
-agent, the model or AgentTrust says happened. Every method writes to the log before it acts."""
+"""The fake shop. Its action log is the proof of what really ran, independent of what the agent,
+the model or AgentTrust says happened. Every method writes to the log before it acts.
+
+The shop owns no data itself: it reads and writes a ``Store`` (in memory by default, Postgres when
+configured) for one run.
+"""
 from __future__ import annotations
 
-import copy
+import uuid
 from typing import Any
 
-from .fixtures import CUSTOMERS, ORDERS, TICKETS
+from .store import MemoryStore, Store
+
+
+def new_run_id() -> str:
+    return f"run-{uuid.uuid4().hex[:8]}"
 
 
 class Shop:
-    def __init__(self) -> None:
-        self.tickets = copy.deepcopy(TICKETS)
-        self.orders = copy.deepcopy(ORDERS)
-        self.customers = copy.deepcopy(CUSTOMERS)
-        self.actions: list[dict[str, Any]] = []
-        self.refunds: list[dict[str, Any]] = []
+    def __init__(self, store: Store | None = None, run_id: str | None = None) -> None:
+        self.store: Store = store or MemoryStore()
+        self.run_id = run_id or new_run_id()
         self.outbox: list[dict[str, Any]] = []
-        self._refund_keys: dict[tuple[str, str, float], str] = {}
 
-    def _log(self, tool: str, args: dict[str, Any]) -> None:
-        self.actions.append({"seq": len(self.actions) + 1, "tool": tool, "args": dict(args)})
+    def __enter__(self) -> "Shop":
+        return self
+
+    def __exit__(self, *exc: object) -> None:
+        self.close()
+
+    def close(self) -> None:
+        self.store.close()
+
+    # What really ran, for tests and for the command line.
+    @property
+    def actions(self) -> list[dict[str, Any]]:
+        return self.store.actions()
+
+    @property
+    def refunds(self) -> list[dict[str, Any]]:
+        return self.store.refunds()
+
+    @property
+    def orders(self) -> dict[str, dict[str, Any]]:
+        return self.store.orders()
 
     def count(self, tool: str) -> int:
         return sum(1 for a in self.actions if a["tool"] == tool)
 
     def read_ticket(self, ticket_id: str) -> dict[str, Any]:
-        self._log("read_ticket", {"ticket_id": ticket_id})
-        ticket = self.tickets.get(ticket_id)
-        return {"ok": True, "ticket": dict(ticket)} if ticket else {"ok": False, "error": "no such ticket"}
+        self.store.log_action("read_ticket", {"ticket_id": ticket_id})
+        ticket = self.store.get_ticket(ticket_id)
+        return {"ok": True, "ticket": ticket} if ticket else {"ok": False, "error": "no such ticket"}
 
     def lookup_order(self, order_id: str) -> dict[str, Any]:
-        self._log("lookup_order", {"order_id": order_id})
-        order = self.orders.get(order_id)
-        return {"ok": True, "order": dict(order)} if order else {"ok": False, "error": "no such order"}
+        self.store.log_action("lookup_order", {"order_id": order_id})
+        order = self.store.get_order(order_id)
+        return {"ok": True, "order": order} if order else {"ok": False, "error": "no such order"}
 
     def lookup_customer(self, customer_id: str) -> dict[str, Any]:
-        self._log("lookup_customer", {"customer_id": customer_id})
-        customer = self.customers.get(customer_id)
-        return {"ok": True, "customer": dict(customer)} if customer else {"ok": False, "error": "no such customer"}
+        self.store.log_action("lookup_customer", {"customer_id": customer_id})
+        customer = self.store.get_customer(customer_id)
+        return {"ok": True, "customer": customer} if customer else {"ok": False, "error": "no such customer"}
 
-    def issue_refund(self, order_id: str, amount: float, currency: str, reason: str, run_id: str) -> dict[str, Any]:
-        self._log("issue_refund", {"order_id": order_id, "amount": amount, "currency": currency, "reason": reason})
-        if order_id not in self.orders:
+    def issue_refund(self, order_id: str, amount: float, currency: str, reason: str) -> dict[str, Any]:
+        self.store.log_action("issue_refund", {"order_id": order_id, "amount": amount, "currency": currency,
+                                               "reason": reason})
+        if self.store.get_order(order_id) is None:
             return {"ok": False, "error": "no such order"}
-        key = (run_id, order_id, float(amount))
-        if key in self._refund_keys:
-            return {"ok": True, "status": "duplicate", "refund_id": self._refund_keys[key]}
-        refund = {"refund_id": f"R-{len(self.refunds) + 1:04d}", "order_id": order_id, "amount": amount,
-                  "currency": currency, "status": "sent"}
-        self.refunds.append(refund)
-        self._refund_keys[key] = refund["refund_id"]
-        return {"ok": True, "refund": dict(refund)}
+        existing = self.store.find_refund(order_id, amount)
+        if existing:
+            return {"ok": True, "status": "duplicate", "refund_id": existing}
+        return {"ok": True, "refund": self.store.add_refund(order_id, amount, currency, reason)}
 
     def send_email(self, to: str, subject: str, body: str) -> dict[str, Any]:
-        self._log("send_email", {"to": to, "subject": subject, "body": body})
+        self.store.log_action("send_email", {"to": to, "subject": subject, "body": body})
         message_id = f"M-{len(self.outbox) + 1:04d}"
         self.outbox.append({"message_id": message_id, "to": to, "subject": subject, "body": body})
         return {"ok": True, "message_id": message_id}
 
     def purge_orders(self) -> dict[str, Any]:
-        self._log("purge_orders", {})
-        purged = len(self.orders)
-        self.orders.clear()
-        return {"ok": True, "purged": purged}
+        self.store.log_action("purge_orders", {})
+        return {"ok": True, "purged": self.store.purge_orders()}

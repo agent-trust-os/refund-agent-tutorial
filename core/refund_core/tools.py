@@ -1,4 +1,4 @@
-"""The six tools the model can call, bound to one Shop and one run.
+"""The six tools the model can call, bound to one Shop (and so one run).
 
 ``user`` and ``input`` are keyword-only and ignored here. They exist so phase 2's AgentTrust
 decorator can read who is asking and what the request was; ``tool_spec`` hides them from the model.
@@ -10,7 +10,7 @@ from typing import Any, Callable
 from .shop import Shop
 
 
-def make_tools(shop: Shop, run_id: str) -> dict[str, Callable[..., dict[str, Any]]]:
+def make_tools(shop: Shop) -> dict[str, Callable[..., dict[str, Any]]]:
     def read_ticket(ticket_id: str, *, user: str = "support-bot", input: str = "") -> dict[str, Any]:
         """Read a support ticket by its id."""
         return shop.read_ticket(ticket_id)
@@ -26,7 +26,7 @@ def make_tools(shop: Shop, run_id: str) -> dict[str, Callable[..., dict[str, Any
     def issue_refund(order_id: str, amount: float, currency: str = "USD", reason: str = "",
                      *, user: str = "support-bot", input: str = "") -> dict[str, Any]:
         """Refund money to the customer of an order."""
-        return shop.issue_refund(order_id, amount, currency, reason, run_id)
+        return shop.issue_refund(order_id, amount, currency, reason)
 
     def send_email(to: str, subject: str, body: str, *, user: str = "support-bot",
                    input: str = "") -> dict[str, Any]:

@@ -7,7 +7,7 @@ from refund_core.scenarios import SCENARIOS, Call, Scenario, answer, call
 from refund_core.shop import Shop
 from refund_core.tools import make_tools
 
-SPECS = [tool_spec(fn) for fn in make_tools(Shop(), run_id="r").values()]
+SPECS = [tool_spec(fn) for fn in make_tools(Shop()).values()]
 
 
 def scenario(*steps, on_blocked=()):

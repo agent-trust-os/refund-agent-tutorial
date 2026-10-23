@@ -128,3 +128,10 @@ def test_cli_prints_the_action_log_for_the_problem(capsys):
 def test_cli_rejects_an_unknown_scenario(capsys):
     assert main(["nope"]) == 2
     assert "unknown scenario" in capsys.readouterr().err
+
+
+def test_an_unreachable_database_fails_loudly(monkeypatch, capsys):
+    monkeypatch.setenv("DATABASE_URL", "postgresql://x:y@127.0.0.1:1/z?connect_timeout=2")
+    assert main(["over_limit"]) == 1
+    err = capsys.readouterr().err
+    assert "DATABASE_URL" in err and "over_limit" not in err.split("DATABASE_URL")[0]

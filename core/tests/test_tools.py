@@ -8,7 +8,7 @@ NAMES = ["read_ticket", "lookup_order", "lookup_customer", "issue_refund", "send
 
 
 def test_every_tool_has_a_spec():
-    tools = make_tools(Shop(), run_id="r1")
+    tools = make_tools(Shop())
     assert list(tools) == NAMES
     specs = [tool_spec(fn) for fn in tools.values()]
     assert [s.name for s in specs] == NAMES
@@ -16,7 +16,7 @@ def test_every_tool_has_a_spec():
 
 
 def test_issue_refund_spec():
-    spec = tool_spec(make_tools(Shop(), run_id="r1")["issue_refund"])
+    spec = tool_spec(make_tools(Shop())["issue_refund"])
     assert spec.parameters["type"] == "object"
     assert spec.parameters["required"] == ["order_id", "amount"]
     props = spec.parameters["properties"]
@@ -27,19 +27,19 @@ def test_issue_refund_spec():
 
 
 def test_purge_orders_has_empty_schema():
-    spec = tool_spec(make_tools(Shop(), run_id="r1")["purge_orders"])
+    spec = tool_spec(make_tools(Shop())["purge_orders"])
     assert spec.parameters == {"type": "object", "properties": {}, "required": []}
 
 
 def test_no_spec_exposes_hidden_arguments():
-    for fn in make_tools(Shop(), run_id="r1").values():
+    for fn in make_tools(Shop()).values():
         props = tool_spec(fn).parameters["properties"]
         assert "user" not in props and "input" not in props
 
 
 def test_tools_call_the_shop_and_accept_hidden_kwargs():
     shop = Shop()
-    tools = make_tools(shop, run_id="r1")
+    tools = make_tools(shop)
     result = tools["issue_refund"](order_id="O-1001", amount=40, reason="late", user="bot", input="ticket text")
     assert result["ok"] and shop.count("issue_refund") == 1
     assert tools["lookup_order"]("O-1001")["order"]["total"] == 120.0

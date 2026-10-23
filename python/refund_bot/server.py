@@ -12,7 +12,7 @@ from typing import Any
 
 from refund_core.models.mock import MockModel
 from refund_core.scenarios import BY_ID, SCENARIOS
-from refund_core.shop import Shop
+from refund_core.config import new_shop
 
 from .agent import run
 
@@ -48,7 +48,13 @@ class Handler(BaseHTTPRequestHandler):
         if scenario is None:
             self._send(404, {"error": f"unknown scenario {scenario_id!r}"})
             return
-        result = run(scenario, MockModel(scenario), Shop())
+        try:
+            shop = new_shop()
+        except Exception as exc:
+            self._send(503, {"error": f"could not open the shop (check DATABASE_URL): {exc}"})
+            return
+        with shop:
+            result = run(scenario, MockModel(scenario), shop)
         self._send(200, {
             "scenario": scenario.id,
             "answer": result.answer,

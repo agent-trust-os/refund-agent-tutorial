@@ -9,7 +9,7 @@ import sys
 from .agent import RunResult, run
 from refund_core.models.mock import MockModel
 from refund_core.scenarios import BY_ID, SCENARIOS
-from refund_core.shop import Shop
+from refund_core.config import new_shop
 
 
 def _show(content: object) -> str:
@@ -55,7 +55,13 @@ def main(argv: list[str] | None = None) -> int:
     if scenario is None:
         print(f"unknown scenario {args.scenario!r}; try --list", file=sys.stderr)
         return 2
-    result = run(scenario, MockModel(scenario), Shop())
+    try:
+        shop = new_shop()
+    except Exception as exc:
+        print(f"could not open the shop (check DATABASE_URL): {exc}", file=sys.stderr)
+        return 1
+    with shop:
+        result = run(scenario, MockModel(scenario), shop)
     print(format_run(scenario.id, scenario.ticket_id, result))
     return 0
 

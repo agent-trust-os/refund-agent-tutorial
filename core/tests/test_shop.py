@@ -4,26 +4,28 @@ from refund_core.shop import Shop
 
 def test_refund_is_logged_and_idempotent():
     shop = Shop()
-    first = shop.issue_refund("O-1001", 40, "USD", "late", run_id="r1")
-    second = shop.issue_refund("O-1001", 40, "USD", "late", run_id="r1")
+    first = shop.issue_refund("O-1001", 40, "USD", "late")
+    second = shop.issue_refund("O-1001", 40, "USD", "late")
     assert first["ok"] and first["refund"]["status"] == "sent"
     assert second == {"ok": True, "status": "duplicate", "refund_id": first["refund"]["refund_id"]}
     assert len(shop.refunds) == 1
     assert shop.count("issue_refund") == 2
 
 
-def test_different_run_or_amount_is_a_new_refund():
+def test_a_different_amount_or_a_new_shop_is_a_new_refund():
     shop = Shop()
-    shop.issue_refund("O-1001", 40, "USD", "late", run_id="r1")
-    shop.issue_refund("O-1001", 41, "USD", "late", run_id="r1")
-    shop.issue_refund("O-1001", 40, "USD", "late", run_id="r2")
-    assert len(shop.refunds) == 3
+    shop.issue_refund("O-1001", 40, "USD", "late")
+    shop.issue_refund("O-1001", 41, "USD", "late")
+    assert len(shop.refunds) == 2
+    other = Shop()
+    other.issue_refund("O-1001", 40, "USD", "late")
+    assert len(other.refunds) == 1
 
 
 def test_unknown_order_returns_error():
     shop = Shop()
     assert shop.lookup_order("O-0000") == {"ok": False, "error": "no such order"}
-    assert shop.issue_refund("O-0000", 10, "USD", "", run_id="r1") == {"ok": False, "error": "no such order"}
+    assert shop.issue_refund("O-0000", 10, "USD", "") == {"ok": False, "error": "no such order"}
     assert shop.refunds == []
 
 

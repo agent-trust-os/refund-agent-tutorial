@@ -1,7 +1,7 @@
 [project]
-name = "refund-bot"
+name = "refund-core"
 version = "0.1.0"
-description = "A refund support agent on a scripted mock LLM, the base for the AgentTrust tutorial."
+description = "Shared by every framework folder: the shop, tools, scenarios and the mock LLM."
 requires-python = ">=3.12"
 dependencies = []
 
@@ -11,6 +11,7 @@ build-backend = "uv_build"
 
 [tool.uv.build-backend]
 module-root = ""
+module-name = "refund_core"
 
 [dependency-groups]
 dev = [

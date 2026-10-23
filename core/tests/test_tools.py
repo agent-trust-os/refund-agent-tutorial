@@ -1,8 +1,8 @@
 import pytest
 
-from refund_bot.models.base import tool_spec
-from refund_bot.shop import Shop
-from refund_bot.tools import make_tools
+from refund_core.models.base import tool_spec
+from refund_core.shop import Shop
+from refund_core.tools import make_tools
 
 NAMES = ["read_ticket", "lookup_order", "lookup_customer", "issue_refund", "send_email", "purge_orders"]
 

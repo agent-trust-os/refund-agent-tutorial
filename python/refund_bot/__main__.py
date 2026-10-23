@@ -6,9 +6,9 @@ import json
 import sys
 
 from .agent import RunResult, run
-from .models.mock import MockModel
-from .scenarios import BY_ID, SCENARIOS
-from .shop import Shop
+from refund_core.models.mock import MockModel
+from refund_core.scenarios import BY_ID, SCENARIOS
+from refund_core.shop import Shop
 
 
 def _show(content: object) -> str:

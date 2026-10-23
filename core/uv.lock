@@ -64,7 +64,7 @@ wheels = [
 ]
 
 [[package]]
-name = "refund-bot"
+name = "refund-core"
 version = "0.1.0"
 source = { editable = "." }
 

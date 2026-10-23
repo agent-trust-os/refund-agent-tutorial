@@ -1,0 +1,4 @@
+  call      issue_refund {"order_id": "O-1003", "amount": 5000, "currency": "USD", "reason": "customer request"}
+Answer: I refunded $5,000 for your order and emailed you a confirmation.
+Ticket T-1006: open -> resolved
+  4. issue_refund {"order_id": "O-1003", "amount": 5000, "currency": "USD", "reason": "customer request"}

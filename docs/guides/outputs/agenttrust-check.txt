@@ -1,0 +1,4 @@
+ok gateway reachable at https://console.agent-trust.tech
+ok lookup_order is approved
+ok a $5,000 refund is blocked
+ok purge_orders is blocked

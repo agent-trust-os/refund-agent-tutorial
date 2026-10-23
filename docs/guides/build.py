@@ -2,7 +2,7 @@
 inlining style.css, the code snippets (docs/guides/snippets) and the captured outputs (docs/guides/outputs).
 
 ``--check`` rebuilds in memory and fails if a page on disk differs, so a page cannot drift from the code.
-Placeholders: ``{{css}}``, ``{{snippet:NAME}}``, ``{{out:NAME}}``.
+Placeholders: ``{{css}}``, ``{{snippet:NAME}}``, ``{{out:NAME}}``, ``{{file:PATH}}`` (a repo file, as is).
 """
 from __future__ import annotations
 
@@ -21,6 +21,11 @@ def snippet(name: str) -> str:
     return f'<div class="path">{html.escape(target)}</div><pre><code>{html.escape(chr(10).join(body))}</code></pre>'
 
 
+def repo_file(path: str) -> str:
+    text = (HERE.parent.parent / path).read_text().rstrip()
+    return f'<div class="path">{html.escape(path)}</div><pre><code>{html.escape(text)}</code></pre>'
+
+
 def output(name: str) -> str:
     return f"<pre><code>{html.escape((HERE / 'outputs' / f'{name}.txt').read_text().rstrip())}</code></pre>"
 
@@ -29,6 +34,7 @@ def render(source: Path) -> str:
     text = source.read_text()
     text = text.replace("{{css}}", (HERE / "style.css").read_text().strip())
     text = re.sub(r"\{\{snippet:([\w-]+)\}\}", lambda m: snippet(m.group(1)), text)
+    text = re.sub(r"\{\{file:([\w./-]+)\}\}", lambda m: repo_file(m.group(1)), text)
     return re.sub(r"\{\{out:([\w-]+)\}\}", lambda m: output(m.group(1)), text)
 
 

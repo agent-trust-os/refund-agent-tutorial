@@ -141,7 +141,9 @@ uv run pytest -q</code></pre>
 <div class="callout warn"><strong>Do not skip this.</strong> With no declared tools the gateway skips the tool check and approves anything, including a tool that does not exist. We saw exactly that: before the manifest was saved, <code>purge_orders</code> was approved.</div>
 
 <div class="label">Step 4 — Add the policy pack</div>
-<p>The manifest cap is a hard stop; the policy pack adds score-based rules on the arguments. In <strong>Policies</strong> create a private pack from <code>python/policies/refund-bot.yaml</code> and activate it. It has two rules: a refund needs a reason, and a refund above $500 is a critical violation. In <strong>block</strong> mode a violation is blocked.</p>
+<p>The manifest cap is a hard stop; the policy pack adds score-based rules on the arguments. In <strong>Policies</strong> create a private pack, paste the YAML below (it is the file <code>python/policies/refund-bot.yaml</code>) and activate it. It has two rules: a refund needs a reason, and a refund above $500 is a critical violation. In <strong>block</strong> mode a violation is blocked.</p>
+{{file:python/policies/refund-bot.yaml}}
+<p>Read it from the top. <code>agent_id_patterns</code> ties the pack to your <code>refund-bot</code> agent. Each rule has a <code>target</code>, the path of the value to check inside the proposed call (<code>execution.tools_called.0.arguments.amount</code> is the refund amount), an <code>operator</code> and a <code>value</code>. The <code>conditions</code> block limits a rule to calls of <code>issue_refund</code>, so lookups are never affected. A <code>critical</code> rule that fails drops the policy score to 0, and the gateway then blocks.</p>
 
 <div class="label">Step 5 — Write your .env</div>
 <p><code>.env</code> is ignored by git. <code>AGENTRUST_FAILURE_MODE=closed</code> makes the bot refuse to act when the gateway cannot be reached, the opposite of the SDK default.</p>

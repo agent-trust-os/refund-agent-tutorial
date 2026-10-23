@@ -69,7 +69,7 @@ def test_scenarios_run_on_their_own_database(client):
     ("post", "/tickets", {"customer_id": "C-1", "order_id": "O-9", "body": "hi"}, 400, "no such order"),
     ("post", "/tickets", {"customer_id": "C-1", "body": "   "}, 400, "body must not be empty"),
     ("post", "/tickets", {"customer_id": "C-1"}, 400, "body is required"),
-    ("post", "/tickets", [1], 400, "the request body must be a JSON object"),
+    ("post", "/tickets", [1], 400, "the request body must be a JSON object (send it with Content-Type: application/json)"),
     ("get", "/tickets/T-9999", None, 404, "no such ticket 'T-9999'"),
     ("post", "/tickets/T-9999/resolve", None, 404, "no such ticket 'T-9999'"),
     ("post", "/scenarios/nope/run", None, 404, "unknown scenario 'nope'"),
@@ -78,6 +78,12 @@ def test_scenarios_run_on_their_own_database(client):
 def test_errors(client, method, path, body, status, error):
     response = getattr(client, method)(path, **({"json": body} if body is not None else {}))
     assert (response.status_code, response.json()) == (status, {"error": error})
+
+
+def test_a_form_body_explains_how_to_send_json(client):
+    response = client.post("/tickets", content="customer_id=C-1&body=hi",
+                           headers={"Content-Type": "application/x-www-form-urlencoded"})
+    assert response.status_code == 400 and "Content-Type: application/json" in response.json()["error"]
 
 
 def test_resolving_twice_is_a_conflict(client):

@@ -1,14 +1,10 @@
 """Shared test setup.
 
-* Every test runs in memory unless it asks for the real services, so the suite never writes to the
-  compose database by accident.
-* When DATABASE_URL is set, the rows the tests wrote (run ids starting ``test-``) are cleared at the end.
+Every test runs on its own in-memory database (the ``db`` fixture) with no mail server, whatever is set in
+the environment. Tests that need the real Postgres or Mailpit read POSTGRES_TEST_URL or MAILPIT_API, which
+only the compose ``test`` service sets.
 """
-import os
-
 import pytest
-
-TABLES = ["actions", "refunds", "tickets", "orders", "customers"]
 
 
 @pytest.fixture
@@ -21,19 +17,6 @@ def db():
 
 
 @pytest.fixture(autouse=True)
-def _in_memory(monkeypatch):
+def _no_real_services(monkeypatch):
     monkeypatch.delenv("DATABASE_URL", raising=False)
     monkeypatch.delenv("SMTP_HOST", raising=False)
-
-
-@pytest.fixture(scope="session", autouse=True)
-def _clean_test_runs():
-    yield
-    dsn = os.environ.get("DATABASE_URL")
-    if not dsn:
-        return
-    import psycopg
-
-    with psycopg.connect(dsn, autocommit=True) as conn:
-        for table in TABLES:
-            conn.execute(f"DELETE FROM {table} WHERE run_id LIKE 'test-%'")

@@ -1,7 +1,7 @@
 [project]
 name = "refund-bot"
 version = "0.1.0"
-description = "Refund Bot in plain Python: a support agent on a mock LLM with Postgres and Mailpit, the base for the AgentTrust tutorial."
+description = "Refund Bot: a customer-support agent on a mock LLM, with FastAPI, SQLAlchemy and Mailpit. The base for the AgentTrust tutorial."
 requires-python = ">=3.12"
 dependencies = [
     "alembic>=1.13",
@@ -20,6 +20,7 @@ build-backend = "uv_build"
 
 [tool.uv.build-backend]
 module-root = ""
+module-name = "app"
 
 [dependency-groups]
 dev = [

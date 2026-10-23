@@ -1,3 +1,4 @@
+"""The rule-based mock LLM: how it reads a ticket's text."""
 import pytest
 
 from app.llm.rules import classify

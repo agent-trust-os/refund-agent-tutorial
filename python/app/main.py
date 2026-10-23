@@ -58,7 +58,7 @@ def _describe(error: dict) -> str:
     if error["type"] == "missing":
         return f"{field} is required"
     if field == "body" and error["type"] in ("model_attributes_type", "dict_type"):
-        return "the request body must be a JSON object"
+        return "the request body must be a JSON object (send it with Content-Type: application/json)"
     return f"{field}: {error['msg']}"
 
 

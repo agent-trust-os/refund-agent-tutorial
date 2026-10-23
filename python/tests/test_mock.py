@@ -1,3 +1,4 @@
+"""The scripted mock LLM: replays steps, branches when a call is blocked, refuses calls a real model could not make."""
 import pytest
 
 from app.db.seed import TICKETS

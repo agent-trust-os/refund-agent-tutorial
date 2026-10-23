@@ -4,9 +4,9 @@ import urllib.request
 
 import pytest
 
-from refund_core.config import new_shop
-from refund_core.mail import MemoryMailer, SmtpMailer
-from refund_core.shop import Shop
+from refund_bot.config import new_shop
+from refund_bot.mail import MemoryMailer, SmtpMailer
+from refund_bot.shop import Shop
 
 MAILPIT_API = os.environ.get("MAILPIT_API")  # e.g. http://localhost:8025
 SMTP_HOST = os.environ.get("SMTP_HOST", "localhost")

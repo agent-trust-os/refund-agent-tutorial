@@ -1,11 +1,11 @@
 import pytest
 
-from refund_core.fixtures import TICKETS
-from refund_core.models.base import FinalAnswer, Message, ToolCall, tool_spec
-from refund_core.models.mock import MockModel, ScenarioError
-from refund_core.scenarios import SCENARIOS, Call, Scenario, answer, call
-from refund_core.shop import Shop
-from refund_core.tools import make_tools
+from refund_bot.fixtures import TICKETS
+from refund_bot.models.base import FinalAnswer, Message, ToolCall, tool_spec
+from refund_bot.models.mock import MockModel, ScenarioError
+from refund_bot.scenarios import SCENARIOS, Call, Scenario, answer, call
+from refund_bot.shop import Shop
+from refund_bot.tools import make_tools
 
 SPECS = [tool_spec(fn) for fn in make_tools(Shop()).values()]
 

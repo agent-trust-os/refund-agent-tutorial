@@ -137,7 +137,7 @@ name = "refund-bot"
 version = "0.1.0"
 source = { editable = "." }
 dependencies = [
-    { name = "refund-core", extra = ["postgres"] },
+    { name = "psycopg", extra = ["binary"] },
 ]
 
 [package.dev-dependencies]
@@ -146,30 +146,10 @@ dev = [
 ]
 
 [package.metadata]
-requires-dist = [{ name = "refund-core", extras = ["postgres"], editable = "../core" }]
+requires-dist = [{ name = "psycopg", extras = ["binary"], specifier = ">=3.2" }]
 
 [package.metadata.requires-dev]
 dev = [{ name = "pytest", specifier = ">=9.1.1" }]
-
-[[package]]
-name = "refund-core"
-version = "0.1.0"
-source = { editable = "../core" }
-
-[package.optional-dependencies]
-postgres = [
-    { name = "psycopg", extra = ["binary"] },
-]
-
-[package.metadata]
-requires-dist = [{ name = "psycopg", extras = ["binary"], marker = "extra == 'postgres'", specifier = ">=3.2" }]
-provides-extras = ["postgres"]
-
-[package.metadata.requires-dev]
-dev = [
-    { name = "psycopg", extras = ["binary"], specifier = ">=3.2" },
-    { name = "pytest", specifier = ">=9.1.1" },
-]
 
 [[package]]
 name = "typing-extensions"

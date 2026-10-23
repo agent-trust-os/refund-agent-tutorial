@@ -1,4 +1,4 @@
-# One image with everything the tutorial needs: Python, uv, the shared core and the plain-Python agent.
+# One image with everything the tutorial needs: Python, uv and the Refund Bot.
 FROM python:3.12-slim
 
 COPY --from=ghcr.io/astral-sh/uv:0.11.28 /uv /usr/local/bin/uv
@@ -8,12 +8,10 @@ ENV UV_LINK_MODE=copy \
     PYTHONUNBUFFERED=1
 
 WORKDIR /app
-COPY core ./core
 COPY python ./python
 
-# Install both environments at build time from the lock files, so the container needs no network to run.
-RUN cd core && uv sync --frozen \
- && cd ../python && uv sync --frozen
+# Install from the lock file at build time, so the container needs no network to run.
+RUN cd python && uv sync --frozen
 
 WORKDIR /app/python
 EXPOSE 8000

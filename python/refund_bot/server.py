@@ -17,11 +17,11 @@ from dataclasses import asdict
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from typing import Any
 
-from refund_core.config import new_shop, open_shop
-from refund_core.models.mock import MockModel
-from refund_core.models.rules import RuleModel
-from refund_core.scenarios import BY_ID, SCENARIOS, Scenario
-from refund_core.shop import Shop
+from refund_bot.config import new_shop, open_shop
+from refund_bot.models.mock import MockModel
+from refund_bot.models.rules import RuleModel
+from refund_bot.scenarios import BY_ID, SCENARIOS, Scenario
+from refund_bot.shop import Shop
 
 from .agent import RunResult, run
 

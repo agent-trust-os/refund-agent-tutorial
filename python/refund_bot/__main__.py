@@ -7,10 +7,10 @@ import json
 import sys
 
 from .agent import RunResult, run
-from refund_core.models.mock import MockModel
-from refund_core.models.rules import RuleModel
-from refund_core.scenarios import BY_ID, SCENARIOS, Scenario
-from refund_core.config import new_shop
+from refund_bot.models.mock import MockModel
+from refund_bot.models.rules import RuleModel
+from refund_bot.scenarios import BY_ID, SCENARIOS, Scenario
+from refund_bot.config import new_shop
 
 
 def _show(content: object) -> str:

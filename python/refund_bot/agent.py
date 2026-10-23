@@ -4,10 +4,10 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import Any, Callable
 
-from refund_core.models.base import FinalAnswer, Message, Model, ToolCall, tool_spec
-from refund_core.scenarios import Scenario
-from refund_core.shop import Shop
-from refund_core.tools import make_tools
+from refund_bot.models.base import FinalAnswer, Message, Model, ToolCall, tool_spec
+from refund_bot.scenarios import Scenario
+from refund_bot.shop import Shop
+from refund_bot.tools import make_tools
 
 STEP_LIMIT_ANSWER = "Stopped: step limit reached"
 

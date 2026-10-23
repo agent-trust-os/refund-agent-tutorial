@@ -2,10 +2,10 @@ import sys
 
 from refund_bot.__main__ import main
 from refund_bot.agent import RunResult, call_tool, run
-from refund_core.models.base import FinalAnswer, Message, ToolCall
-from refund_core.models.mock import MockModel
-from refund_core.scenarios import BY_ID, SCENARIOS
-from refund_core.shop import Shop
+from refund_bot.models.base import FinalAnswer, Message, ToolCall
+from refund_bot.models.mock import MockModel
+from refund_bot.scenarios import BY_ID, SCENARIOS
+from refund_bot.shop import Shop
 
 
 def play(scenario_id: str, shop: Shop | None = None) -> tuple[RunResult, Shop]:

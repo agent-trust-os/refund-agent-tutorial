@@ -1,6 +1,6 @@
 import pytest
 
-from refund_core.models.rules import classify
+from refund_bot.models.rules import classify
 
 ORDER_900 = {"order_id": "O-1002", "total": 900.0, "currency": "USD"}
 

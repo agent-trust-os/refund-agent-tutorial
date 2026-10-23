@@ -1,15 +1,12 @@
 [project]
 name = "refund-bot"
 version = "0.1.0"
-description = "Refund Bot in plain Python: the agent loop on the shared core, the base for the AgentTrust tutorial."
+description = "Refund Bot in plain Python: a support agent on a mock LLM with Postgres and Mailpit, the base for the AgentTrust tutorial."
 requires-python = ">=3.12"
-dependencies = ["refund-core[postgres]"]
+dependencies = ["psycopg[binary]>=3.2"]
 
 [project.scripts]
 refund-bot = "refund_bot.__main__:main"
-
-[tool.uv.sources]
-refund-core = { path = "../core", editable = true }
 
 [build-system]
 requires = ["uv_build>=0.11.28,<0.12.0"]

@@ -1,8 +1,8 @@
 """A ticket nobody scripted: the rule-based mock LLM reads its text and resolves it."""
-from refund_core.models.base import Message, ToolCall
-from refund_core.models.rules import RuleModel
-from refund_core.scenarios import ESCALATED, Scenario
-from refund_core.shop import Shop
+from refund_bot.models.base import Message, ToolCall
+from refund_bot.models.rules import RuleModel
+from refund_bot.scenarios import ESCALATED, Scenario
+from refund_bot.shop import Shop
 from refund_bot.agent import run
 
 

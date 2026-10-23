@@ -64,7 +64,7 @@ services:
     profiles: ["test"]
     build: .
     image: refund-agent-tutorial-test
-    working_dir: /app
+    working_dir: /app/python
     environment:
       DATABASE_URL: postgresql://refund:refund@postgres:5432/refund
       SMTP_HOST: mailpit
@@ -75,7 +75,7 @@ services:
         condition: service_healthy
       mailpit:
         condition: service_healthy
-    entrypoint: ["sh", "-c", "cd core && uv run --no-sync pytest -q && cd ../python && uv run --no-sync pytest -q"]
+    entrypoint: ["uv", "run", "--no-sync", "pytest", "-q"]
 
 volumes:
   pgdata:

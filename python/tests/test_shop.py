@@ -1,5 +1,5 @@
-from refund_core.fixtures import INJECTION
-from refund_core.shop import Shop
+from refund_bot.fixtures import INJECTION
+from refund_bot.shop import Shop
 
 
 def test_refund_is_logged_and_idempotent():

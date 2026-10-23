@@ -4,7 +4,7 @@ import uuid
 
 import pytest
 
-from refund_core.store import MemoryStore
+from refund_bot.store import MemoryStore
 
 DSN = os.environ.get("DATABASE_URL")
 BACKENDS = ["memory", pytest.param("postgres", marks=pytest.mark.skipif(not DSN, reason="DATABASE_URL not set"))]
@@ -23,7 +23,7 @@ def make_store(request):
         if request.param == "memory":
             store = MemoryStore()
         else:
-            from refund_core.pgstore import PostgresStore
+            from refund_bot.pgstore import PostgresStore
 
             store = PostgresStore(DSN, rid)
         opened.append(store)
@@ -116,7 +116,7 @@ def test_runs_are_isolated(make_store):
 
 @pytest.mark.skipif(not DSN, reason="DATABASE_URL not set")
 def test_rows_survive_after_the_connection_closes():
-    from refund_core.pgstore import PostgresStore
+    from refund_bot.pgstore import PostgresStore
 
     rid = run_id()
     first = PostgresStore(DSN, rid)

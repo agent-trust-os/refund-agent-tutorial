@@ -18,17 +18,20 @@ add AgentTrust until it cannot. No API key needed.
 LLM. Each framework folder has its own environment and uses `core/` as a local dependency, so you
 only install what you use.
 
-## Run the starting point
+## Run it on your machine
+
+Needs Python 3.12 and [uv](https://docs.astral.sh/uv/). No Docker.
 
 ```
 cd python
 uv sync
+uv run refund-bot --list
+uv run refund-bot over_limit
 uv run pytest
-uv run python -m refund_bot over_limit
 ```
 
-The last command runs a customer asking for a $5,000 refund on a $120 order. The mock LLM follows the
-ticket, and nothing stops it:
+`refund-bot over_limit` runs a customer asking for a $5,000 refund on a $120 order. The mock LLM
+follows the ticket, and nothing stops it:
 
 ```
 Scenario: over_limit (ticket T-1003)
@@ -46,22 +49,29 @@ Action log (what really ran):
 The action log comes from the shop itself, not from the agent or the model. It is the proof of what
 really ran, and the tutorial uses it to show what AgentTrust stops.
 
-`uv run python -m refund_bot --list` shows the six scenarios. To test the shared code on its own:
+`refund-bot --list` shows the six scenarios. To test the shared code on its own:
 `cd core && uv sync && uv run pytest`.
 
-## Run it with Docker
+## Run it as a service with Docker
 
-Nothing to install but Docker. The image holds Python, `uv`, the shared core and the agent, and runs
-with no network.
+Nothing to install but Docker. The image holds Python, `uv`, the shared core and the agent.
 
 ```
-docker compose run --rm refund-bot --list
-docker compose run --rm refund-bot over_limit
-docker compose run --rm test
+docker compose up
 ```
 
-The first command builds the image (about a minute); later runs start in a second. `test` runs the
-`core/` and `python/` test suites.
+The app is then on <http://localhost:8000>:
+
+```
+curl localhost:8000/scenarios                     # the six scenarios
+curl -X POST localhost:8000/run/over_limit        # play one; returns the answer and the action log
+curl localhost:8000/health
+```
+
+`docker compose down` stops it. To run the tests in a container:
+`docker compose --profile test run --rm test`.
+
+Each framework folder will add its own service to `docker-compose.yml`, one port up from the last.
 
 ## What is in the box
 
@@ -79,7 +89,3 @@ The first command builds the image (about a minute); later runs start in a secon
 |---|---|
 | `main` | the starting point: every folder is an ungoverned agent |
 | `complete` | the end result, with AgentTrust integrated in every folder (not created yet) |
-
-## Requirements
-
-Python 3.12 and [uv](https://docs.astral.sh/uv/).

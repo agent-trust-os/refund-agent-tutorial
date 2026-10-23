@@ -1,4 +1,5 @@
-"""python -m refund_bot <scenario>   run a scenario and print what happened and what really ran."""
+"""refund-bot <scenario>   run a scenario and print what happened and what really ran.
+refund-bot --serve      run as an HTTP service (what ``docker compose up`` starts)."""
 from __future__ import annotations
 
 import argparse
@@ -33,8 +34,16 @@ def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(prog="refund_bot", description="Run a Refund Bot scenario on the mock LLM.")
     parser.add_argument("scenario", nargs="?", help="scenario id (see --list)")
     parser.add_argument("--list", action="store_true", help="list scenario ids")
+    parser.add_argument("--serve", action="store_true", help="run as an HTTP service instead of one scenario")
+    parser.add_argument("--host", default="127.0.0.1", help="address for --serve (default 127.0.0.1)")
+    parser.add_argument("--port", type=int, default=8000, help="port for --serve (default 8000)")
     args = parser.parse_args(argv)
 
+    if args.serve:
+        from . import server
+
+        server.serve(args.host, args.port)
+        return 0
     if args.list:
         for s in SCENARIOS:
             print(s.id)

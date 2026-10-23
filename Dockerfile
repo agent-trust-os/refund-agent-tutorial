@@ -16,5 +16,6 @@ RUN cd core && uv sync --frozen \
  && cd ../python && uv sync --frozen
 
 WORKDIR /app/python
-ENTRYPOINT ["uv", "run", "--no-sync", "python", "-m", "refund_bot"]
-CMD ["--list"]
+EXPOSE 8000
+ENTRYPOINT ["uv", "run", "--no-sync", "refund-bot"]
+CMD ["--serve", "--host", "0.0.0.0", "--port", "8000"]

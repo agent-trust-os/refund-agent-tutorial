@@ -5,6 +5,9 @@ description = "Refund Bot in plain Python: the agent loop on the shared core, th
 requires-python = ">=3.12"
 dependencies = ["refund-core"]
 
+[project.scripts]
+refund-bot = "refund_bot.__main__:main"
+
 [tool.uv.sources]
 refund-core = { path = "../core", editable = true }
 

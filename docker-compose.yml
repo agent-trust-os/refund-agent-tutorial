@@ -1,14 +1,23 @@
-# Run the Refund Bot with nothing installed but Docker.
+# `docker compose up` starts the tutorial app. One service per folder; today that is `python`.
+# Each framework folder (langgraph, openai-agents, ...) will add a service here on the next port up.
 #
-#   docker compose run --rm refund-bot over_limit     run a scenario
-#   docker compose run --rm refund-bot --list         list the scenarios
-#   docker compose run --rm test                      run every test
+#   docker compose up                          start the app on http://localhost:8000
+#   curl -X POST localhost:8000/run/over_limit run a scenario
+#   docker compose --profile test run --rm test   run the test suites
 services:
-  refund-bot:
+  python:
     build: .
-    image: refund-agent-tutorial
+    image: refund-agent-tutorial-python
+    ports:
+      - "8000:8000"
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/health')"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
 
   test:
+    profiles: ["test"]
     build: .
     image: refund-agent-tutorial-test
     working_dir: /app

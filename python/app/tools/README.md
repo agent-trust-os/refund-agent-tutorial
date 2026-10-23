@@ -1,6 +1,25 @@
 # tools
 
-What the agent can do: eight plain functions, one file per subject (tickets, orders, customers, refunds, email).
-Each takes a `ToolContext` first (the database and the ticket being worked on) and returns a dict. `make_tools`
-in `__init__.py` hides that context from the model and writes every call to the action log before it runs.
-This is where AgentTrust is added: in phase 2 each tool is wrapped so AgentTrust is asked before it runs.
+What the agent can do. These are eight plain functions, grouped by subject.
+
+| File | Tools |
+|---|---|
+| `tickets.py` | `read_ticket`, `create_ticket`, `update_ticket` |
+| `orders.py` | `lookup_order`, `purge_orders` |
+| `customers.py` | `lookup_customer` |
+| `refunds.py` | `issue_refund` |
+| `email.py` | `send_email` |
+
+Every call goes through `make_tools()` in `__init__.py`:
+
+```mermaid
+flowchart LR
+    M[Model asks:<br/>issue_refund O-1001, 25] --> W["make_tools() wrapper"]
+    W -->|1. write to action log| AL[(actions)]
+    W -->|2. call the tool| F["issue_refund(ctx, ...)"]
+    F --> DB[(database)]
+    AT{{AgentTrust<br/>phase 2}} -.->|asked first| W
+```
+
+The wrapper hides the database from the model and logs every call before it runs. That log is the proof of
+what really happened. **This is where AgentTrust plugs in:** it gets asked before each tool runs.

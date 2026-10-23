@@ -1,6 +1,13 @@
 # Refund Bot on LangGraph
 
-Not built yet. This folder will hold the same Refund Bot as [`python/`](../../python/), built with
-[LangGraph](https://langchain-ai.github.io/langgraph/): the same tickets, the same eight tools and the same
-scenarios, with LangGraph running the agent loop instead of `app/agents/support_agent.py`. The AgentTrust
-modules will then show the same protections on a LangGraph agent.
+Not built yet. This will be the same agent as [`python/`](../../python/), with [LangGraph](https://langchain-ai.github.io/langgraph/) running the loop.
+
+```mermaid
+flowchart LR
+    LG[LangGraph agent] --> T[same 8 tools]
+    T --> DB[(same database)]
+    AT{{AgentTrust}} -.-> T
+```
+
+It uses the same tickets, the same tools and the same scenarios, so the AgentTrust modules show the same
+protections on a LangGraph agent.

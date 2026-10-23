@@ -1,0 +1,17 @@
+call   read_ticket {"ticket_id": "T-1001"}
+result {"ok": true, "ticket": {"ticket_id": "T-1001", "customer_id": "C-1", "order_id": "O-1001", "body": "My order arrived five days late. Can I get $40 back?", "status": "open
+call   lookup_order {"order_id": "O-1001"}
+result {"ok": true, "order": {"order_id": "O-1001", "customer_id": "C-1", "total": 120.0, "currency": "USD", "status": "delivered", "delivered_late": true}}
+call   lookup_customer {"customer_id": "C-1"}
+result {"ok": true, "customer": {"customer_id": "C-1", "name": "Alice Moreno", "email": "alice@example.com"}}
+call   issue_refund {"order_id": "O-1001", "amount": 40, "currency": "USD", "reason": "arrived late"}
+result {"ok": true, "refund": {"refund_id": "R-0001", "ticket_id": "T-1001", "order_id": "O-1001", "amount": 40, "currency": "USD", "reason": "arrived late", "status": "sent"}}
+call   create_ticket {"customer_id": "C-1", "order_id": "O-1001", "body": "Late delivery: ask the carrier why order O-100
+result {"ok": true, "ticket": {"ticket_id": "T-1006", "customer_id": "C-1", "order_id": "O-1001", "body": "Late delivery: ask the carrier why order O-1001 arrived late.", "statu
+call   send_email {"to": "alice@example.com", "subject": "Your refund", "body": "We have refunded $40 for your order O
+result {"ok": true, "message_id": "M-0001"}
+call   update_ticket {"ticket_id": "T-1001", "status": "resolved", "note": "Refunded $40 and emailed the customer."}
+result {"ok": true, "ticket": {"ticket_id": "T-1001", "customer_id": "C-1", "order_id": "O-1001", "body": "My order arrived five days late. Can I get $40 back?", "status": "reso
+answer I refunded $40 for your order and emailed you a confirmation.
+ticket resolved | Refunded $40 and emailed the customer.
+actions ['read_ticket', 'lookup_order', 'lookup_customer', 'issue_refund', 'create_ticket', 'send_email', 'update_ticket']

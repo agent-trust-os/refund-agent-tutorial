@@ -1,0 +1,18 @@
+# Paste this into the Console: Agents > refund-bot > CERTIFY.YAML > Paste.
+# It declares the manifest in one go, so you do not have to fill the small Declared tools fields by hand.
+agent_id: refund-bot
+model:
+  provider: mock
+  model_id: rules
+  version_pin: "1"
+declared_tools:
+  - { name: read_ticket, scope: read, max_amount: null }
+  - { name: lookup_order, scope: read, max_amount: null }
+  - { name: lookup_customer, scope: read, max_amount: null }
+  - { name: issue_refund, scope: write, max_amount: 1000 }
+  - { name: send_email, scope: write, max_amount: null }
+  - { name: create_ticket, scope: write, max_amount: null }
+  - { name: update_ticket, scope: write, max_amount: null }
+policy_pack:
+  name: refund-bot
+  version: "1.0.0"

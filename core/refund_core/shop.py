@@ -2,13 +2,14 @@
 the model or AgentTrust says happened. Every method writes to the log before it acts.
 
 The shop owns no data itself: it reads and writes a ``Store`` (in memory by default, Postgres when
-configured) for one run.
+configured) for one run, and sends email through a ``Mailer``.
 """
 from __future__ import annotations
 
 import uuid
 from typing import Any
 
+from .mail import Mailer, MemoryMailer
 from .store import MemoryStore, Store
 
 
@@ -17,10 +18,11 @@ def new_run_id() -> str:
 
 
 class Shop:
-    def __init__(self, store: Store | None = None, run_id: str | None = None) -> None:
+    def __init__(self, store: Store | None = None, run_id: str | None = None,
+                 mailer: Mailer | None = None) -> None:
         self.store: Store = store or MemoryStore()
         self.run_id = run_id or new_run_id()
-        self.outbox: list[dict[str, Any]] = []
+        self.mailer: Mailer = mailer or MemoryMailer()
 
     def __enter__(self) -> "Shop":
         return self
@@ -43,6 +45,11 @@ class Shop:
     @property
     def orders(self) -> dict[str, dict[str, Any]]:
         return self.store.orders()
+
+    @property
+    def outbox(self) -> list[dict[str, Any]]:
+        """Messages held in memory; empty when the mailer is SMTP (look in Mailpit instead)."""
+        return getattr(self.mailer, "outbox", [])
 
     def count(self, tool: str) -> int:
         return sum(1 for a in self.actions if a["tool"] == tool)
@@ -74,9 +81,7 @@ class Shop:
 
     def send_email(self, to: str, subject: str, body: str) -> dict[str, Any]:
         self.store.log_action("send_email", {"to": to, "subject": subject, "body": body})
-        message_id = f"M-{len(self.outbox) + 1:04d}"
-        self.outbox.append({"message_id": message_id, "to": to, "subject": subject, "body": body})
-        return {"ok": True, "message_id": message_id}
+        return {"ok": True, "message_id": self.mailer.send(to, subject, body)}
 
     def purge_orders(self) -> dict[str, Any]:
         self.store.log_action("purge_orders", {})

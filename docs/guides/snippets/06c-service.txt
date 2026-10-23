@@ -1,0 +1,4 @@
+# target: python/app/services/tickets.py
+# marker: 6
+# replaces: 1
+return run(ticket_id, RuleModel(), db, governed=governed)

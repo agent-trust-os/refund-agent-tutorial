@@ -1,0 +1,6 @@
+# target: python/app/core/config.py
+# marker: 1
+agentrust_gateway_url: str
+agentrust_key: str
+agentrust_agent_id: str
+agentrust_failure_mode: str

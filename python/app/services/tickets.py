@@ -5,6 +5,7 @@
 """
 from __future__ import annotations
 
+import logging
 from typing import Any
 
 from sqlalchemy.orm import Session
@@ -15,6 +16,8 @@ from ..llm.rules import RuleModel
 from ..repositories import tickets
 from ..tools.context import ToolContext
 from ..tools.tickets import create_ticket
+
+log = logging.getLogger("refund_bot.tickets")
 
 
 class TicketError(Exception):
@@ -30,7 +33,9 @@ def submit_ticket(db: Session, customer_id: str, body: str, order_id: str = "") 
     result = create_ticket(ToolContext(db, None), customer_id, body, order_id)
     if not result["ok"]:
         raise TicketError(result["error"], 400)
-    return result["ticket"]
+    ticket = result["ticket"]
+    log.info("%s | submitted | customer %s, order %s: %s", ticket["ticket_id"], customer_id, order_id or "-", body)
+    return ticket
 
 
 def resolve_ticket(db: Session, ticket_id: str) -> RunResult:

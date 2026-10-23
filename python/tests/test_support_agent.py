@@ -117,3 +117,12 @@ def test_offline():
             "bad = [m for m in ('agentrust_sdk', 'anthropic', 'openai', 'httpx') if m in sys.modules]\n"
             "assert not bad, bad")
     assert subprocess.run([sys.executable, "-c", code], capture_output=True).returncode == 0
+
+
+def test_each_step_is_logged_with_the_ticket_id(caplog):
+    caplog.set_level("INFO", logger="refund_bot.agent")
+    play_scenario("over_limit")
+    lines = [r.getMessage() for r in caplog.records if r.name == "refund_bot.agent"]
+    assert lines[0] == "T-1003 | start | model=mock/over_limit"
+    assert 'T-1003 | call  | issue_refund {"order_id": "O-1003", "amount": 5000, "currency": "USD", "reason": "for the trouble"} -> ok R-0001' in lines
+    assert lines[-1] == "T-1003 | done  | ticket resolved | answer: Your refund of $5,000 has been sent."

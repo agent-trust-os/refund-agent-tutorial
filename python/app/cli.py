@@ -74,6 +74,9 @@ def main(argv: list[str] | None = None) -> int:
     if args.command == "serve":
         import uvicorn
 
+        from .core.logging import setup_logging
+
+        setup_logging()
         uvicorn.run("app.main:app", host=args.host, port=args.port)
         return 0
     if args.command == "scenarios":

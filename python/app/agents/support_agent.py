@@ -6,6 +6,8 @@ so the model can be swapped (scripted, rule-based, later a real LLM) and the too
 """
 from __future__ import annotations
 
+import json
+import logging
 from typing import Any, Callable
 
 from sqlalchemy.orm import Session
@@ -18,6 +20,8 @@ from .state import RunResult
 
 STEP_LIMIT_ANSWER = "Stopped: step limit reached"
 
+log = logging.getLogger("refund_bot.agent")
+
 
 def call_tool(fn: Callable[..., dict[str, Any]], call: ToolCall, request: str) -> dict[str, Any]:
     """Run one tool call. The request goes in as the hidden ``input`` argument. A tool that raises
@@ -26,6 +30,21 @@ def call_tool(fn: Callable[..., dict[str, Any]], call: ToolCall, request: str) -
         return fn(**call.args, input=request)
     except Exception as exc:
         return {"status": "ERROR", "tool": call.name, "reason": str(exc)}
+
+
+def summary(result: dict[str, Any]) -> str:
+    """One short word for a tool result, for the log: ok, duplicate, an error, or BLOCKED and why."""
+    if result.get("status") in ("ERROR", "BLOCKED", "UNAVAILABLE"):
+        return f"{result['status']}: {result.get('reason', '')}"
+    if result.get("ok") is False:
+        return f"error: {result['error']}"
+    if result.get("status") == "duplicate":
+        return f"duplicate of {result['refund_id']}"
+    for key, label in (("refund", "refund_id"), ("ticket", "ticket_id")):
+        if key in result:
+            item = result[key]
+            return f"ok {item[label]}" + (f" ({item['status']})" if key == "ticket" else "")
+    return "ok"
 
 
 def run(ticket_id: str, model: Model, db: Session, max_steps: int = 10) -> RunResult:
@@ -39,6 +58,7 @@ def run(ticket_id: str, model: Model, db: Session, max_steps: int = 10) -> RunRe
     request = ticket_request(ticket_id)
     messages = [Message("user", request)]
     answer = STEP_LIMIT_ANSWER
+    log.info("%s | start | model=%s", ticket_id, getattr(model, "name", type(model).__name__))
 
     for _ in range(max_steps):
         step = model.next(messages, specs)
@@ -52,13 +72,17 @@ def run(ticket_id: str, model: Model, db: Session, max_steps: int = 10) -> RunRe
             result = {"status": "ERROR", "tool": step.name, "reason": f"unknown tool {step.name!r}"}
         else:
             result = call_tool(fn, step, request)
+        log.info("%s | call  | %s %s -> %s", ticket_id, step.name, json.dumps(step.args), summary(result))
+        log.debug("%s | result | %s", ticket_id, json.dumps(result))
         messages.append(Message("tool", result, tool_call_id=step.id))
 
+    ticket = tickets.get_ticket(db, ticket_id)
+    log.info("%s | done  | ticket %s | answer: %s", ticket_id, ticket["status"] if ticket else "missing", answer)
     return RunResult(
         ticket_id=ticket_id,
         transcript=messages,
         answer=answer,
-        ticket=tickets.get_ticket(db, ticket_id),
+        ticket=ticket,
         actions=records.list_actions(db, ticket_id=ticket_id),
         created_tickets=[t for t in tickets.list_tickets(db) if t["ticket_id"] not in before],
     )

@@ -19,6 +19,7 @@ class Settings:
     smtp_host: str
     smtp_port: int
     smtp_from: str
+    # TODO(AgentTrust 1/11): add the gateway url, key, agent id and failure mode. Paste from docs/guides/harness.html#todo-1
 
 
 def get_settings() -> Settings:

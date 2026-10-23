@@ -44,4 +44,5 @@ def read(ticket_id: str, db: Session = Depends(get_db)):
 @router.post("/{ticket_id}/resolve", response_model=RunResultOut)
 def resolve(ticket_id: str, db: Session = Depends(get_db)):
     """The agent works on an open ticket and answers with everything it did."""
+    # TODO(AgentTrust 6/11): read ?governed=harness and pass it on. Paste from docs/guides/harness.html#todo-6
     return result_out(resolve_ticket(db, ticket_id))

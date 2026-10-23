@@ -7,6 +7,7 @@
                                              a customer writes in, and the agent resolves the ticket
     refund-bot tickets [--status open]       list tickets
     refund-bot reset                         delete everything and put the starting data back
+    refund-bot agenttrust check              prove the AgentTrust Console setup (four pre-checks)
 
 Data goes to DATABASE_URL (default: the file refund_bot.db in this folder).
 """
@@ -20,6 +21,7 @@ from sqlalchemy.exc import OperationalError
 
 from .agents.state import RunResult
 from .core.config import get_settings
+from .core.env import load_env
 from .db.seed import reset_database
 from .db.session import database
 from .llm.scenarios import SCENARIOS
@@ -48,6 +50,7 @@ def show(result: RunResult) -> str:
         lines.append(f"Created ticket {t['ticket_id']} ({t['status']}): {t['body']}")
     if result.created_tickets:
         lines.append("")
+    # TODO(AgentTrust 11/11): print each decision's envelope id and its Console link. Paste from docs/guides/direct-api.html#todo-11
     lines.append("Action log (what really ran):")
     lines += [f"  {n}. {a['tool']} {json.dumps(a['args'])}" for n, a in enumerate(result.actions, 1)] or ["  (nothing)"]
     return "\n".join(lines)
@@ -68,7 +71,11 @@ def main(argv: list[str] | None = None) -> int:
     ticket.add_argument("--order", default="", help="for example O-1001")
     listing = commands.add_parser("tickets", help="list tickets")
     listing.add_argument("--status", choices=["open", "resolved", "escalated"])
+    # TODO(AgentTrust 6/11): add --governed to "ticket" (harness now, client in TODO 9). Paste from docs/guides/harness.html#todo-6
     commands.add_parser("reset", help="put the starting data back")
+    agenttrust = commands.add_parser("agenttrust", help="AgentTrust helpers")
+    agenttrust.add_argument("action", choices=["check"])
+    load_env()
     args = parser.parse_args(argv)
 
     if args.command == "serve":
@@ -79,6 +86,10 @@ def main(argv: list[str] | None = None) -> int:
         setup_logging()
         uvicorn.run("app.main:app", host=args.host, port=args.port)
         return 0
+    if args.command == "agenttrust":
+        from .agenttrust_check import run_checks
+
+        return 0 if run_checks() else 1
     if args.command == "scenarios":
         for s in SCENARIOS:
             print(f"{s.id:<16} ticket {s.ticket_id}")

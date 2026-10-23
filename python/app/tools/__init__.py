@@ -31,6 +31,8 @@ Tool = Callable[..., dict[str, Any]]
 
 def make_tools(db: Session, ticket_id: str | None) -> dict[str, Tool]:
     """The tools for one ticket, by name, ready for the model."""
+    # TODO(AgentTrust 4/11): add a governed= parameter and wrap each tool. Paste from docs/guides/harness.html#todo-4
+    # TODO(AgentTrust 9/11): accept governed="client" as well. Paste from docs/guides/direct-api.html#todo-9
     ctx = ToolContext(db, ticket_id)
     return {tool.__name__: _for_the_model(tool, ctx) for tool in ALL_TOOLS}
 

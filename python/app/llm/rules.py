@@ -83,6 +83,7 @@ class RuleModel:
         tool, result = messages[-2].content["tool"], messages[-1].content
         if not isinstance(result, dict):
             return
+        # TODO(AgentTrust 7/11): escalate the ticket even when read_ticket itself was blocked. Paste from docs/guides/harness.html#todo-7
         if result.get("status") in NOT_DONE or result.get("ok") is False:
             self._failed = True
             if tool == "update_ticket":

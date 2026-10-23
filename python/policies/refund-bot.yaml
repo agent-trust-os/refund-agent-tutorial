@@ -1,0 +1,32 @@
+name: refund-bot
+version: "1.0.0"
+description: >
+  Rules for the Refund Bot. They check the proposed tool arguments at pre-check
+  (execution.tools_called.0.arguments.*). Hard stops (an undeclared tool, an amount above the
+  max_amount in the agent's manifest) come from the manifest, not from this pack.
+environment: all
+agent_id_patterns:
+  - "refund-bot"
+
+rules:
+
+  - id: refund_reason_present
+    description: "A refund must say why"
+    severity: critical
+    target: execution.tools_called.0.arguments.reason
+    operator: not_empty
+    conditions:
+      - target: execution.tools_called.0.name
+        operator: eq
+        value: "issue_refund"
+
+  - id: refund_over_500
+    description: "A refund above $500 needs a person"
+    severity: critical
+    target: execution.tools_called.0.arguments.amount
+    operator: lte
+    value: 500
+    conditions:
+      - target: execution.tools_called.0.name
+        operator: eq
+        value: "issue_refund"

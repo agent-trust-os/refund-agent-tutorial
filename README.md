@@ -49,6 +49,20 @@ really ran, and the tutorial uses it to show what AgentTrust stops.
 `uv run python -m refund_bot --list` shows the six scenarios. To test the shared code on its own:
 `cd core && uv sync && uv run pytest`.
 
+## Run it with Docker
+
+Nothing to install but Docker. The image holds Python, `uv`, the shared core and the agent, and runs
+with no network.
+
+```
+docker compose run --rm refund-bot --list
+docker compose run --rm refund-bot over_limit
+docker compose run --rm test
+```
+
+The first command builds the image (about a minute); later runs start in a second. `test` runs the
+`core/` and `python/` test suites.
+
 ## What is in the box
 
 - **The agent:** reads a ticket, looks up the order and customer, refunds, replies or escalates.

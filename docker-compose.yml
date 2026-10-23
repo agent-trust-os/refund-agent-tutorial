@@ -1,0 +1,15 @@
+# Run the Refund Bot with nothing installed but Docker.
+#
+#   docker compose run --rm refund-bot over_limit     run a scenario
+#   docker compose run --rm refund-bot --list         list the scenarios
+#   docker compose run --rm test                      run every test
+services:
+  refund-bot:
+    build: .
+    image: refund-agent-tutorial
+
+  test:
+    build: .
+    image: refund-agent-tutorial-test
+    working_dir: /app
+    entrypoint: ["sh", "-c", "cd core && uv run --no-sync pytest -q && cd ../python && uv run --no-sync pytest -q"]

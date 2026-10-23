@@ -39,15 +39,28 @@ class PostgresStore:
                             (self.run_id, o["order_id"], o["customer_id"], o["total"], o["currency"],
                              o["status"], o["delivered_late"]))
             for t in TICKETS.values():
-                cur.execute("INSERT INTO tickets VALUES (%s, %s, %s, %s, %s)",
-                            (self.run_id, t["ticket_id"], t["customer_id"], t["order_id"], t["body"]))
+                cur.execute("INSERT INTO tickets (run_id, ticket_id, customer_id, order_id, body, status, note) "
+                            "VALUES (%s, %s, %s, %s, %s, %s, %s)",
+                            (self.run_id, t["ticket_id"], t["customer_id"], t["order_id"], t["body"],
+                             t["status"], t["note"]))
 
     def _one(self, sql: str, *params: Any) -> dict[str, Any] | None:
         return _plain(self._conn.execute(sql, params).fetchone())
 
     def get_ticket(self, ticket_id: str) -> dict[str, Any] | None:
-        return self._one("SELECT ticket_id, customer_id, order_id, body FROM tickets "
+        return self._one("SELECT ticket_id, customer_id, order_id, body, status, note FROM tickets "
                          "WHERE run_id = %s AND ticket_id = %s", self.run_id, ticket_id)
+
+    def tickets(self) -> dict[str, dict[str, Any]]:
+        rows = self._conn.execute(
+            "SELECT ticket_id, customer_id, order_id, body, status, note FROM tickets "
+            "WHERE run_id = %s ORDER BY ticket_id", (self.run_id,)).fetchall()
+        return {r["ticket_id"]: _plain(r) for r in rows}
+
+    def update_ticket(self, ticket_id: str, status: str, note: str) -> dict[str, Any] | None:
+        return self._one("UPDATE tickets SET status = %s, note = %s WHERE run_id = %s AND ticket_id = %s "
+                         "RETURNING ticket_id, customer_id, order_id, body, status, note",
+                         status, note, self.run_id, ticket_id)
 
     def get_order(self, order_id: str) -> dict[str, Any] | None:
         return self._one("SELECT order_id, customer_id, total, currency, status, delivered_late FROM orders "

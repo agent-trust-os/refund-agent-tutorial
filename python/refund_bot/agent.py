@@ -17,6 +17,7 @@ class RunResult:
     transcript: list[Message]
     answer: str
     actions: list[dict[str, Any]]
+    ticket: dict[str, Any] | None   # the ticket after the run: its status and note
 
 
 def call_tool(fn: Callable[..., dict[str, Any]], call: ToolCall, request: str) -> dict[str, Any]:
@@ -49,4 +50,5 @@ def run(scenario: Scenario, model: Model, shop: Shop, max_steps: int = 10) -> Ru
         else:
             result = call_tool(fn, step, request)
         messages.append(Message("tool", result, tool_call_id=step.id))
-    return RunResult(transcript=messages, answer=answer, actions=list(shop.actions))
+    return RunResult(transcript=messages, answer=answer, actions=list(shop.actions),
+                     ticket=shop.tickets.get(scenario.ticket_id))

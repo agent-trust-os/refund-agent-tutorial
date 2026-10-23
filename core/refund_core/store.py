@@ -10,6 +10,8 @@ from .fixtures import CUSTOMERS, ORDERS, TICKETS
 
 class Store(Protocol):
     def get_ticket(self, ticket_id: str) -> dict[str, Any] | None: ...
+    def tickets(self) -> dict[str, dict[str, Any]]: ...
+    def update_ticket(self, ticket_id: str, status: str, note: str) -> dict[str, Any] | None: ...
     def get_order(self, order_id: str) -> dict[str, Any] | None: ...
     def get_customer(self, customer_id: str) -> dict[str, Any] | None: ...
     def orders(self) -> dict[str, dict[str, Any]]: ...
@@ -35,6 +37,16 @@ class MemoryStore:
     def get_ticket(self, ticket_id: str) -> dict[str, Any] | None:
         ticket = self._tickets.get(ticket_id)
         return dict(ticket) if ticket else None
+
+    def tickets(self) -> dict[str, dict[str, Any]]:
+        return {k: dict(v) for k, v in self._tickets.items()}
+
+    def update_ticket(self, ticket_id: str, status: str, note: str) -> dict[str, Any] | None:
+        ticket = self._tickets.get(ticket_id)
+        if ticket is None:
+            return None
+        ticket["status"], ticket["note"] = status, note
+        return dict(ticket)
 
     def get_order(self, order_id: str) -> dict[str, Any] | None:
         order = self._orders.get(order_id)

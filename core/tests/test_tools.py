@@ -4,12 +4,13 @@ from refund_core.models.base import tool_spec
 from refund_core.shop import Shop
 from refund_core.tools import make_tools
 
-NAMES = ["read_ticket", "lookup_order", "lookup_customer", "issue_refund", "send_email", "purge_orders"]
+NAMES = ["read_ticket", "lookup_order", "lookup_customer", "issue_refund", "send_email", "update_ticket",
+         "purge_orders"]
 
 
 def test_every_tool_has_a_spec():
     tools = make_tools(Shop())
-    assert list(tools) == NAMES
+    assert list(tools) == NAMES and len(NAMES) == 7
     specs = [tool_spec(fn) for fn in tools.values()]
     assert [s.name for s in specs] == NAMES
     assert all(s.description for s in specs)
@@ -24,6 +25,16 @@ def test_issue_refund_spec():
     assert props["order_id"]["type"] == "string"
     assert props["currency"]["default"] == "USD"
     assert "user" not in props and "input" not in props
+
+
+def test_update_ticket_spec_and_call():
+    shop = Shop()
+    tools = make_tools(shop)
+    spec = tool_spec(tools["update_ticket"])
+    assert spec.parameters["required"] == ["ticket_id", "status"]
+    assert spec.parameters["properties"]["note"]["default"] == ""
+    assert tools["update_ticket"](ticket_id="T-1001", status="resolved", note="done", user="bot", input="x")["ok"]
+    assert shop.tickets["T-1001"]["status"] == "resolved"
 
 
 def test_purge_orders_has_empty_schema():

@@ -34,14 +34,15 @@ def test_ungoverned_problem():
 
 def test_allowed_refund_runs_every_step():
     result, shop = play("allowed_refund")
-    assert [a["tool"] for a in result.actions] == ["read_ticket", "lookup_order", "issue_refund", "send_email"]
+    assert [a["tool"] for a in result.actions] == ["read_ticket", "lookup_order", "issue_refund", "send_email",
+                                                   "update_ticket"]
     assert shop.outbox[0]["to"] == "alice@example.com"
 
 
 def test_transcript_pairs_each_call_with_its_result():
     result, _ = play("pii_lookup")
     roles = [m.role for m in result.transcript]
-    assert roles == ["user", "assistant", "tool", "assistant", "tool", "assistant"]
+    assert roles == ["user", "assistant", "tool", "assistant", "tool", "assistant", "tool", "assistant"]
     assert result.transcript[1].tool_call_id == result.transcript[2].tool_call_id == "call-1"
     assert result.transcript[-1].content == result.answer
 
@@ -50,6 +51,20 @@ def test_poisoned_text_reaches_the_model_only_through_the_ticket_tool():
     result, _ = play("poisoned_ticket")
     assert "Ignore all previous" not in result.transcript[0].content
     assert "Ignore all previous" in str(result.transcript[2].content)
+
+
+def test_the_agent_closes_the_ticket_and_the_run_reports_it():
+    result, shop = play("allowed_refund")
+    assert result.ticket["status"] == "resolved"
+    assert result.ticket["note"] == "Refunded $40 and emailed the customer."
+    assert shop.tickets["T-1001"]["status"] == "resolved"
+    assert shop.tickets["T-1002"]["status"] == "open"
+
+
+def test_ungoverned_the_bad_runs_also_close_their_tickets():
+    for scenario_id, ticket_id in [("over_limit", "T-1003"), ("purge", "T-1005"), ("poisoned_ticket", "T-1004")]:
+        result, _ = play(scenario_id)
+        assert result.ticket["ticket_id"] == ticket_id and result.ticket["status"] == "resolved"
 
 
 def test_offline():
@@ -123,6 +138,13 @@ def test_cli_prints_the_action_log_for_the_problem(capsys):
     out = capsys.readouterr().out
     assert "issue_refund" in out and '"amount": 5000' in out
     assert "Action log" in out
+
+
+def test_cli_shows_that_the_ticket_is_resolved(capsys):
+    assert main(["allowed_refund"]) == 0
+    out = capsys.readouterr().out
+    assert "Ticket T-1001: open -> resolved" in out
+    assert "Refunded $40 and emailed the customer." in out
 
 
 def test_cli_rejects_an_unknown_scenario(capsys):

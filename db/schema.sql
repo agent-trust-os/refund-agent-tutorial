@@ -29,6 +29,8 @@ CREATE TABLE IF NOT EXISTS tickets (
     customer_id text NOT NULL,
     order_id    text,
     body        text NOT NULL,
+    status      text NOT NULL DEFAULT 'open',      -- open, resolved or escalated
+    note        text NOT NULL DEFAULT '',
     PRIMARY KEY (run_id, ticket_id)
 );
 

@@ -57,6 +57,22 @@ def test_refund_is_idempotent_and_ids_count_up(make_store):
     assert [r["amount"] for r in store.refunds()] == [40, 41]
 
 
+def test_tickets_start_open_and_can_be_updated(make_store):
+    store = make_store()
+    assert store.get_ticket("T-1001")["status"] == "open" and store.get_ticket("T-1001")["note"] == ""
+    updated = store.update_ticket("T-1001", "resolved", "Refunded $40.")
+    assert updated["status"] == "resolved" and updated["note"] == "Refunded $40."
+    assert store.get_ticket("T-1001") == updated
+    assert store.update_ticket("T-0", "resolved", "") is None
+    assert {t: v["status"] for t, v in store.tickets().items()}["T-1002"] == "open"
+
+
+def test_a_ticket_update_stays_in_its_own_run(make_store):
+    a, b = make_store(), make_store()
+    a.update_ticket("T-1001", "escalated", "Passed on.")
+    assert b.get_ticket("T-1001")["status"] == "open"
+
+
 def test_actions_are_numbered_in_order(make_store):
     store = make_store()
     store.log_action("read_ticket", {"ticket_id": "T-1001"})

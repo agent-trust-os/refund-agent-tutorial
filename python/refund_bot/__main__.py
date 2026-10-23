@@ -25,7 +25,13 @@ def format_run(scenario_id: str, ticket_id: str, run_id: str, result: RunResult)
             lines.append(f"  result    {_show(m.content)}")
         else:
             lines.append(f"  {m.role:<9} {_show(m.content)}")
-    lines += ["", f"Answer: {result.answer}", "", "Action log (what really ran):"]
+    lines += ["", f"Answer: {result.answer}", ""]
+    if result.ticket:
+        lines += [f"Ticket {result.ticket['ticket_id']}: open -> {result.ticket['status']}"]
+        if result.ticket["note"]:
+            lines += [f"  note: {result.ticket['note']}"]
+        lines += [""]
+    lines += ["Action log (what really ran):"]
     lines += [f"  {a['seq']}. {a['tool']} {json.dumps(a['args'])}" for a in result.actions] or ["  (nothing)"]
     return "\n".join(lines)
 

@@ -1,4 +1,5 @@
 import json
+import os
 import threading
 import urllib.error
 import urllib.request
@@ -55,9 +56,16 @@ def test_run_returns_the_answer_and_the_action_log(base_url):
     assert status == 200
     assert body["scenario"] == "over_limit"
     assert body["answer"] == "Your refund of $5,000 has been sent."
-    assert [a["tool"] for a in body["actions"]] == ["read_ticket", "lookup_order", "issue_refund"]
+    assert [a["tool"] for a in body["actions"]] == ["read_ticket", "lookup_order", "issue_refund", "update_ticket"]
     assert body["actions"][2]["args"]["amount"] == 5000
     assert body["transcript"][0]["role"] == "user"
+
+
+def test_run_reports_the_ticket(base_url):
+    body = post(base_url + "/run/allowed_refund")[1]
+    assert body["ticket"] == {"ticket_id": "T-1001", "customer_id": "C-1", "order_id": "O-1001",
+                              "body": "My order arrived five days late. Can I get $40 back?",
+                              "status": "resolved", "note": "Refunded $40 and emailed the customer."}
 
 
 def test_every_run_starts_from_a_fresh_shop(base_url):
@@ -92,3 +100,26 @@ def test_run_returns_a_run_id(base_url):
     first = post(base_url + "/run/allowed_refund")[1]
     second = post(base_url + "/run/allowed_refund")[1]
     assert first["run_id"].startswith("run-") and first["run_id"] != second["run_id"]
+
+
+REAL_DSN = os.environ.get("DATABASE_URL")  # read at import, before the fixture in conftest.py clears it
+
+
+@pytest.mark.skipif(not REAL_DSN, reason="DATABASE_URL not set")
+def test_the_ticket_status_is_saved_in_postgres(base_url, monkeypatch):
+    import psycopg
+
+    monkeypatch.setenv("DATABASE_URL", REAL_DSN)
+    body = post(base_url + "/run/allowed_refund")[1]
+    run_id = body["run_id"]
+    with psycopg.connect(REAL_DSN, autocommit=True) as conn:
+        try:
+            row = conn.execute("SELECT status, note FROM tickets WHERE run_id = %s AND ticket_id = 'T-1001'",
+                               (run_id,)).fetchone()
+            others = conn.execute("SELECT count(*) FROM tickets WHERE run_id = %s AND status = 'open'",
+                                  (run_id,)).fetchone()[0]
+        finally:
+            for table in ["actions", "refunds", "tickets", "orders", "customers"]:
+                conn.execute(f"DELETE FROM {table} WHERE run_id = %s", (run_id,))
+    assert row == ("resolved", "Refunded $40 and emailed the customer.")
+    assert others == 4

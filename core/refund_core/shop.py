@@ -13,6 +13,9 @@ from .mail import Mailer, MemoryMailer
 from .store import MemoryStore, Store
 
 
+TICKET_STATUSES = ("open", "resolved", "escalated")
+
+
 def new_run_id() -> str:
     return f"run-{uuid.uuid4().hex[:8]}"
 
@@ -37,6 +40,10 @@ class Shop:
     @property
     def actions(self) -> list[dict[str, Any]]:
         return self.store.actions()
+
+    @property
+    def tickets(self) -> dict[str, dict[str, Any]]:
+        return self.store.tickets()
 
     @property
     def refunds(self) -> list[dict[str, Any]]:
@@ -82,6 +89,13 @@ class Shop:
     def send_email(self, to: str, subject: str, body: str) -> dict[str, Any]:
         self.store.log_action("send_email", {"to": to, "subject": subject, "body": body})
         return {"ok": True, "message_id": self.mailer.send(to, subject, body)}
+
+    def update_ticket(self, ticket_id: str, status: str, note: str) -> dict[str, Any]:
+        self.store.log_action("update_ticket", {"ticket_id": ticket_id, "status": status, "note": note})
+        if status not in TICKET_STATUSES:
+            return {"ok": False, "error": "status must be open, resolved or escalated"}
+        ticket = self.store.update_ticket(ticket_id, status, note)
+        return {"ok": True, "ticket": ticket} if ticket else {"ok": False, "error": "no such ticket"}
 
     def purge_orders(self) -> dict[str, Any]:
         self.store.log_action("purge_orders", {})

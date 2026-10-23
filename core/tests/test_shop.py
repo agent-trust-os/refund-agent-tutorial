@@ -59,3 +59,19 @@ def test_fixtures_cover_the_scenarios():
     assert shop.lookup_order("O-1002")["order"]["total"] == 900
     assert shop.lookup_customer("C-1")["customer"]["ssn"].startswith("000-")
     assert shop.read_ticket("T-1005")["ticket"]["order_id"] is None
+
+
+def test_update_ticket_changes_status_and_is_logged():
+    shop = Shop()
+    result = shop.update_ticket("T-1001", "resolved", "Refunded $40 and emailed the customer.")
+    assert result["ok"] and result["ticket"]["status"] == "resolved"
+    assert shop.tickets["T-1001"]["note"] == "Refunded $40 and emailed the customer."
+    assert shop.tickets["T-1002"]["status"] == "open"
+    assert shop.count("update_ticket") == 1
+
+
+def test_update_ticket_rejects_an_unknown_status_and_an_unknown_ticket():
+    shop = Shop()
+    assert shop.update_ticket("T-1001", "done", "") == {"ok": False, "error": "status must be open, resolved or escalated"}
+    assert shop.update_ticket("T-0000", "resolved", "") == {"ok": False, "error": "no such ticket"}
+    assert shop.tickets["T-1001"]["status"] == "open"

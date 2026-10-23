@@ -1,9 +1,9 @@
 """What every tool gets besides the model's arguments: the database, and the ticket being worked on."""
-from __future__ import annotations
+from __future__ import annotations 
 
 from dataclasses import dataclass
 
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session 
 
 
 @dataclass

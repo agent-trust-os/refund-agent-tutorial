@@ -13,8 +13,9 @@ router = APIRouter(tags=["data"])
 
 
 @router.get("/orders", response_model=list[Order])
-def list_orders(db: Session = Depends(get_db)):
+def list_orders(db: Session = Depends(get_db)): 
     return orders.list_orders(db)
+    
 
 
 @router.get("/customers", response_model=list[Customer])

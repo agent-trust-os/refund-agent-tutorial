@@ -16,8 +16,8 @@ def _show(content: object) -> str:
     return content if isinstance(content, str) else json.dumps(content)
 
 
-def format_run(scenario_id: str, ticket_id: str, result: RunResult) -> str:
-    lines = [f"Scenario: {scenario_id} (ticket {ticket_id})", ""]
+def format_run(scenario_id: str, ticket_id: str, run_id: str, result: RunResult) -> str:
+    lines = [f"Scenario: {scenario_id} (ticket {ticket_id}, run {run_id})", ""]
     for m in result.transcript:
         if m.role == "assistant" and isinstance(m.content, dict):
             lines.append(f"  call      {m.content['tool']} {json.dumps(m.content['args'])}")
@@ -62,7 +62,7 @@ def main(argv: list[str] | None = None) -> int:
         return 1
     with shop:
         result = run(scenario, MockModel(scenario), shop)
-    print(format_run(scenario.id, scenario.ticket_id, result))
+    print(format_run(scenario.id, scenario.ticket_id, shop.run_id, result))
     return 0
 
 

@@ -1,15 +1,59 @@
-# `docker compose up` starts the tutorial app. One service per folder; today that is `python`.
-# Each framework folder (langgraph, openai-agents, ...) will add a service here on the next port up.
+# `docker compose up` starts the whole tutorial stack:
+#   postgres  the shop's data (every run keeps its rows)
+#   mailpit   the email service: catches every email the app sends, delivers none
+#   python    the Refund Bot app; each framework folder will add a service like it, one port up
 #
-#   docker compose up                          start the app on http://localhost:8000
-#   curl -X POST localhost:8000/run/over_limit run a scenario
-#   docker compose --profile test run --rm test   run the test suites
+#   docker compose up                                 start everything; app on http://localhost:8000
+#   curl -X POST localhost:8000/run/allowed_refund    play a scenario
+#   open http://localhost:8025                        see the email it sent
+#   docker compose --profile test run --rm test       run the test suites against the live services
+#   docker compose down -v                            stop and delete the database
+#
+# Everything is bound to 127.0.0.1 and the credentials are throwaway demo values.
 services:
+  postgres:
+    image: postgres:17-alpine
+    environment:
+      POSTGRES_USER: refund
+      POSTGRES_PASSWORD: refund
+      POSTGRES_DB: refund
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+      # Runs only when the volume is first created. After a schema change: docker compose down -v
+      - ./db/schema.sql:/docker-entrypoint-initdb.d/schema.sql:ro
+    ports:
+      - "127.0.0.1:5432:5432"
+    healthcheck:
+      test: ["CMD", "pg_isready", "-U", "refund", "-d", "refund"]
+      interval: 3s
+      timeout: 3s
+      retries: 15
+
+  mailpit:
+    image: axllent/mailpit:v1.32.0
+    ports:
+      - "127.0.0.1:1025:1025"   # SMTP
+      - "127.0.0.1:8025:8025"   # web UI and API
+    healthcheck:
+      test: ["CMD", "/mailpit", "readyz"]
+      interval: 3s
+      timeout: 3s
+      retries: 10
+
   python:
     build: .
     image: refund-agent-tutorial-python
+    environment:
+      DATABASE_URL: postgresql://refund:refund@postgres:5432/refund
+      SMTP_HOST: mailpit
+      SMTP_PORT: "1025"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      mailpit:
+        condition: service_healthy
     ports:
-      - "8000:8000"
+      - "127.0.0.1:8000:8000"
     healthcheck:
       test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/health')"]
       interval: 5s
@@ -21,4 +65,17 @@ services:
     build: .
     image: refund-agent-tutorial-test
     working_dir: /app
+    environment:
+      DATABASE_URL: postgresql://refund:refund@postgres:5432/refund
+      SMTP_HOST: mailpit
+      SMTP_PORT: "1025"
+      MAILPIT_API: http://mailpit:8025
+    depends_on:
+      postgres:
+        condition: service_healthy
+      mailpit:
+        condition: service_healthy
     entrypoint: ["sh", "-c", "cd core && uv run --no-sync pytest -q && cd ../python && uv run --no-sync pytest -q"]
+
+volumes:
+  pgdata:

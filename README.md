@@ -20,7 +20,7 @@ only install what you use.
 
 ## Run it on your machine
 
-Needs Python 3.12 and [uv](https://docs.astral.sh/uv/). No Docker.
+Needs Python 3.12 and [uv](https://docs.astral.sh/uv/). No Docker, no services.
 
 ```
 cd python
@@ -30,11 +30,12 @@ uv run refund-bot over_limit
 uv run pytest
 ```
 
-`refund-bot over_limit` runs a customer asking for a $5,000 refund on a $120 order. The mock LLM
-follows the ticket, and nothing stops it:
+By default the shop keeps its data in memory and "sends" email to an in-memory outbox, so this works
+anywhere. `refund-bot over_limit` runs a customer asking for a $5,000 refund on a $120 order. The mock
+LLM follows the ticket, and nothing stops it:
 
 ```
-Scenario: over_limit (ticket T-1003)
+Scenario: over_limit (ticket T-1003, run run-1a2b3c4d)
 
   user      Resolve support ticket T-1003.
   ...
@@ -52,24 +53,60 @@ really ran, and the tutorial uses it to show what AgentTrust stops.
 `refund-bot --list` shows the six scenarios. To test the shared code on its own:
 `cd core && uv sync && uv run pytest`.
 
-## Run it as a service with Docker
+### Use the real Postgres and Mailpit from the command line
 
-Nothing to install but Docker. The image holds Python, `uv`, the shared core and the agent.
+Start only the two services, then point the command at them:
+
+```
+docker compose up -d postgres mailpit
+export DATABASE_URL=postgresql://refund:refund@localhost:5432/refund
+export SMTP_HOST=localhost
+cd python
+uv run refund-bot allowed_refund
+```
+
+The shop's rows are now in Postgres and the email is in Mailpit at <http://localhost:8025>. If you set
+`DATABASE_URL` or `SMTP_HOST` and the service is not running, the command stops with an error. It never
+quietly falls back to memory. Unset both variables to go back to the in-memory default.
+
+## Run the whole stack with Docker
+
+Nothing to install but Docker.
 
 ```
 docker compose up
 ```
 
-The app is then on <http://localhost:8000>:
+That starts three services:
+
+| Service | What it is | Where |
+|---|---|---|
+| `python` | the Refund Bot app | <http://localhost:8000> |
+| `postgres` | the shop's data; every run keeps its rows | `localhost:5432`, user, password and database `refund` |
+| `mailpit` | the email service; catches every email the app sends and delivers none | <http://localhost:8025> (web UI), SMTP on `localhost:1025` |
+
+Play a scenario, then look at what it left behind:
 
 ```
-curl localhost:8000/scenarios                     # the six scenarios
-curl -X POST localhost:8000/run/over_limit        # play one; returns the answer and the action log
-curl localhost:8000/health
+curl localhost:8000/scenarios                          # the six scenarios
+curl -X POST localhost:8000/run/allowed_refund         # play one; returns a run_id, the answer and the action log
+open http://localhost:8025                             # the refund email, in Mailpit
+docker compose exec postgres psql -U refund -d refund \
+  -c "select run_id, refund_id, order_id, amount from refunds"
 ```
 
-`docker compose down` stops it. To run the tests in a container:
-`docker compose --profile test run --rm test`.
+Every run gets its own `run_id` and its own copy of the shop data, so runs never affect each other and
+their history stays in Postgres. Email never leaves your machine, because Mailpit delivers nothing.
+Everything is bound to `127.0.0.1` and the credentials are throwaway demo values.
+
+```
+docker compose down          # stop; keeps the database
+docker compose down -v       # stop and delete the database
+docker compose --profile test run --rm test      # run the test suites against the live services
+```
+
+The database schema (`db/schema.sql`) is applied only when the database volume is first created. After
+changing it, run `docker compose down -v`.
 
 Each framework folder will add its own service to `docker-compose.yml`, one port up from the last.
 
@@ -80,6 +117,7 @@ Each framework folder will add its own service to `docker-compose.yml`, one port
   and `purge_orders` (a destructive tool the agent should never be allowed to use).
 - **The mock LLM:** replays a scripted scenario and checks every call against the tool's schema,
   so a script can never do what a real model could not. Deterministic, offline, free.
+- **A real shop behind it:** Postgres for the data and Mailpit for the email, when you run the stack.
 - **All data is synthetic.** SSNs use the reserved `000-xx-xxxx` range and card numbers are
   standard test numbers.
 

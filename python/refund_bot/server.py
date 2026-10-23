@@ -57,6 +57,7 @@ class Handler(BaseHTTPRequestHandler):
             result = run(scenario, MockModel(scenario), shop)
         self._send(200, {
             "scenario": scenario.id,
+            "run_id": shop.run_id,
             "answer": result.answer,
             "transcript": [asdict(m) for m in result.transcript],
             "actions": result.actions,

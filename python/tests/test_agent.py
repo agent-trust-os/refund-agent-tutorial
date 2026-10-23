@@ -135,3 +135,8 @@ def test_an_unreachable_database_fails_loudly(monkeypatch, capsys):
     assert main(["over_limit"]) == 1
     err = capsys.readouterr().err
     assert "DATABASE_URL" in err and "over_limit" not in err.split("DATABASE_URL")[0]
+
+
+def test_cli_prints_the_run_id(capsys):
+    assert main(["allowed_refund"]) == 0
+    assert "run run-" in capsys.readouterr().out.splitlines()[0]

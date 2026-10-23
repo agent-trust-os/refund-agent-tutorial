@@ -19,7 +19,10 @@ class Settings:
     smtp_host: str
     smtp_port: int
     smtp_from: str
-    # TODO(AgentTrust 1/11): add the gateway url, key, agent id and failure mode. Paste from docs/guides/harness.html#todo-1
+    agentrust_gateway_url: str
+    agentrust_key: str
+    agentrust_agent_id: str
+    agentrust_failure_mode: str
 
 
 def get_settings() -> Settings:
@@ -29,7 +32,10 @@ def get_settings() -> Settings:
         smtp_host=os.environ.get("SMTP_HOST", ""),
         smtp_port=int(os.environ.get("SMTP_PORT", "1025")),
         smtp_from=os.environ.get("SMTP_FROM", "support@example.com"),
-        # TODO(AgentTrust 1/11): read the same four settings from the environment. Paste from docs/guides/harness.html#todo-1
+        agentrust_gateway_url=os.environ.get("AGENTRUST_GATEWAY_URL", "").rstrip("/"),
+        agentrust_key=os.environ.get("AGENTRUST_KEY", ""),
+        agentrust_agent_id=os.environ.get("AGENTRUST_AGENT_ID", "refund-bot"),
+        agentrust_failure_mode=os.environ.get("AGENTRUST_FAILURE_MODE", "closed"),
     )
 
 

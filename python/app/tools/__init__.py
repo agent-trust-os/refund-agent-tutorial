@@ -43,7 +43,10 @@ def _guard(governed: str | None) -> Callable[[Tool], Tool]:
     """
     if governed is None:
         return lambda tool: tool
-    # TODO(AgentTrust 4/11): guard the tools with @harness when governed == "harness". Paste from docs/guides/harness.html#todo-4
+    if governed == "harness":
+        from .governance import governed_harness
+
+        return governed_harness
     # TODO(AgentTrust 9/11): guard them with the direct client when governed == "client". Paste from docs/guides/direct-api.html#todo-9
     raise ValueError(f"governed={governed!r} is not set up yet: finish the AgentTrust TODOs first")
 

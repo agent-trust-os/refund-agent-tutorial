@@ -45,5 +45,4 @@ def resolve_ticket(db: Session, ticket_id: str, governed: str | None = None) -> 
         raise TicketError(f"no such ticket {ticket_id!r}", 404)
     if ticket["status"] != "open":
         raise TicketError(f"ticket {ticket_id} is already {ticket['status']}", 409)
-    # TODO(AgentTrust 6/11): add a governed= parameter and pass it to run. Paste from docs/guides/harness.html#todo-6
-    return run(ticket_id, RuleModel(), db)
+    return run(ticket_id, RuleModel(), db, governed=governed)

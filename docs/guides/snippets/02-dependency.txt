@@ -1,0 +1,3 @@
+# target: python/pyproject.toml
+# marker: 2
+"agentrust-py==0.0.4",

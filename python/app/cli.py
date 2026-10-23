@@ -71,7 +71,7 @@ def main(argv: list[str] | None = None) -> int:
     ticket.add_argument("--order", default="", help="for example O-1001")
     listing = commands.add_parser("tickets", help="list tickets")
     listing.add_argument("--status", choices=["open", "resolved", "escalated"])
-    # TODO(AgentTrust 6/11): add --governed to "ticket" (harness now, client in TODO 9). Paste from docs/guides/harness.html#todo-6
+    ticket.add_argument("--governed", choices=["harness", "client"], help="ask AgentTrust before each tool runs")
     commands.add_parser("reset", help="put the starting data back")
     agenttrust = commands.add_parser("agenttrust", help="AgentTrust helpers")
     agenttrust.add_argument("action", choices=["check"])
@@ -102,8 +102,7 @@ def main(argv: list[str] | None = None) -> int:
             if args.command == "ticket":
                 created = submit_ticket(db, args.customer, args.text, args.order)
                 print(f"Submitted ticket {created['ticket_id']} for {args.customer}: {args.text}\n")
-                # TODO(AgentTrust 6/11): pass args.governed on. Paste from docs/guides/harness.html#todo-6
-                print(show(resolve_ticket(db, created["ticket_id"])))
+                print(show(resolve_ticket(db, created["ticket_id"], args.governed)))
             elif args.command == "tickets":
                 for t in tickets.list_tickets(db, args.status):
                     print(f"{t['ticket_id']}  {t['status']:<10} {t['customer_id']:<4} {t['order_id'] or '-':<7} {t['body'][:60]}")

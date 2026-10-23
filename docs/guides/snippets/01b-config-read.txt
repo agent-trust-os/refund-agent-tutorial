@@ -1,0 +1,6 @@
+# target: python/app/core/config.py
+# marker: 1
+agentrust_gateway_url=os.environ.get("AGENTRUST_GATEWAY_URL", "").rstrip("/"),
+agentrust_key=os.environ.get("AGENTRUST_KEY", ""),
+agentrust_agent_id=os.environ.get("AGENTRUST_AGENT_ID", "refund-bot"),
+agentrust_failure_mode=os.environ.get("AGENTRUST_FAILURE_MODE", "closed"),

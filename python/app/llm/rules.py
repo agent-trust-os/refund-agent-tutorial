@@ -106,9 +106,11 @@ class RuleModel:
 
     def _decide(self, messages: list[Message]) -> tuple[str, dict[str, Any]] | FinalAnswer:
         if self._ticket is None:
-            # TODO(AgentTrust 7/11): escalate the ticket even when read_ticket itself was blocked. Paste from docs/guides/harness.html#todo-7
-            if self._failed:
-                return FinalAnswer(ESCALATED_TEXT)
+            if self._failed:            # read_ticket was refused: close the ticket from the id in the request
+                if "closed" in self._done:
+                    return FinalAnswer(ESCALATED_TEXT)
+                ticket_id = TICKET_ID.search(str(messages[0].content)).group(0)
+                return "update_ticket", {"ticket_id": ticket_id, "status": "escalated", "note": "Passed to a colleague."}
             match = TICKET_ID.search(str(messages[0].content))
             if not match:
                 raise ScenarioError("rule model: no ticket id in the request")

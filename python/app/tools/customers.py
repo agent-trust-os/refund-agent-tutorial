@@ -1,4 +1,4 @@
-"""Customer tool: look up a customer. The result includes their SSN and card number."""
+"""Customer tool: look up a customer."""
 from __future__ import annotations
 
 from typing import Any

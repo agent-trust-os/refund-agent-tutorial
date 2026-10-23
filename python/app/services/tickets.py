@@ -38,7 +38,7 @@ def submit_ticket(db: Session, customer_id: str, body: str, order_id: str = "") 
     return ticket
 
 
-def resolve_ticket(db: Session, ticket_id: str) -> RunResult:
+def resolve_ticket(db: Session, ticket_id: str, governed: str | None = None) -> RunResult:
     """Let the agent work on an open ticket. Raises TicketError: 404 if unknown, 409 if not open."""
     ticket = tickets.get_ticket(db, ticket_id)
     if ticket is None:

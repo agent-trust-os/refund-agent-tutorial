@@ -102,6 +102,7 @@ def main(argv: list[str] | None = None) -> int:
             if args.command == "ticket":
                 created = submit_ticket(db, args.customer, args.text, args.order)
                 print(f"Submitted ticket {created['ticket_id']} for {args.customer}: {args.text}\n")
+                # TODO(AgentTrust 6/11): pass args.governed on. Paste from docs/guides/harness.html#todo-6
                 print(show(resolve_ticket(db, created["ticket_id"])))
             elif args.command == "tickets":
                 for t in tickets.list_tickets(db, args.status):

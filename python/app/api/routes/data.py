@@ -17,7 +17,6 @@ def list_orders(db: Session = Depends(get_db)):
     return orders.list_orders(db)
     
 
-
 @router.get("/customers", response_model=list[Customer])
 def list_customers(db: Session = Depends(get_db)):
     return orders.list_customers(db)

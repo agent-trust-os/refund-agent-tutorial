@@ -29,6 +29,7 @@ def get_settings() -> Settings:
         smtp_host=os.environ.get("SMTP_HOST", ""),
         smtp_port=int(os.environ.get("SMTP_PORT", "1025")),
         smtp_from=os.environ.get("SMTP_FROM", "support@example.com"),
+        # TODO(AgentTrust 1/11): read the same four settings from the environment. Paste from docs/guides/harness.html#todo-1
     )
 
 

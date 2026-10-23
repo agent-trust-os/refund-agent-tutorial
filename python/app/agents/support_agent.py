@@ -47,10 +47,11 @@ def summary(result: dict[str, Any]) -> str:
     return "ok"
 
 
-def run(ticket_id: str, model: Model, db: Session, max_steps: int = 10) -> RunResult:
+def run(ticket_id: str, model: Model, db: Session, max_steps: int = 10, governed: str | None = None) -> RunResult:
     """Work on one ticket until the model gives its final answer.
 
     ``max_steps`` is a local safety net so a looping model cannot run forever. It is not a governance control.
+    ``governed`` says how AgentTrust guards the tools: None (not at all), "harness" or "client".
     """
     # TODO(AgentTrust 5/11): take a governed= argument and pass it to make_tools. Paste from docs/guides/harness.html#todo-5
     tools = make_tools(db, ticket_id)

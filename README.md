@@ -18,6 +18,16 @@ add AgentTrust until it cannot. No API key needed.
 LLM. Each framework folder has its own environment and uses `core/` as a local dependency, so you
 only install what you use.
 
+## See it work in one command
+
+```
+./demo.sh
+```
+
+It starts Postgres, Mailpit and the app, lets a customer write in, has the agent resolve the ticket, and
+prints what changed in the app, in Postgres and in Mailpit. It needs Docker and `python3`. Stop it with
+`docker compose down -v`.
+
 ## Run it on your machine
 
 Needs Python 3.12 and [uv](https://docs.astral.sh/uv/). No Docker, no services.

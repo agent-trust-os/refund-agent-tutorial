@@ -5,10 +5,12 @@ data to an empty database. The CLI and the API both call it, so nobody has to ru
 """
 from __future__ import annotations
 
+from collections.abc import Iterator
 from functools import lru_cache
 from pathlib import Path
 
 from alembic import command
+from fastapi import Request
 from alembic.config import Config
 from sqlalchemy import Engine, create_engine
 from sqlalchemy.orm import Session, sessionmaker
@@ -53,3 +55,9 @@ def open_database(url: str | None = None) -> sessionmaker[Session]:
 def database(url: str) -> sessionmaker[Session]:
     """The app's database for ``url``, opened once per process."""
     return open_database(url)
+
+
+def get_db(request: Request) -> Iterator[Session]:
+    """FastAPI dependency: one database session per request, closed afterwards."""
+    with request.app.state.sessions() as db:
+        yield db

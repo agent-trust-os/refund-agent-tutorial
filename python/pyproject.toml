@@ -5,12 +5,14 @@ description = "Refund Bot in plain Python: a support agent on a mock LLM with Po
 requires-python = ">=3.12"
 dependencies = [
     "alembic>=1.13",
+    "fastapi>=0.115",
     "psycopg[binary]>=3.2",
     "sqlalchemy>=2.0",
+    "uvicorn>=0.30",
 ]
 
 [project.scripts]
-refund-bot = "refund_bot.__main__:main"
+refund-bot = "app.cli:main"
 
 [build-system]
 requires = ["uv_build>=0.11.28,<0.12.0"]
@@ -21,6 +23,7 @@ module-root = ""
 
 [dependency-groups]
 dev = [
+    "httpx2>=2.16.0",
     "pytest>=9.1.1",
 ]
 

@@ -91,7 +91,12 @@ class Shop:
         return {"ok": True, "message_id": self.mailer.send(to, subject, body)}
 
     def create_ticket(self, customer_id: str, body: str, order_id: str = "") -> dict[str, Any]:
+        """Open a ticket as an agent action (logged like every tool call)."""
         self.store.log_action("create_ticket", {"customer_id": customer_id, "body": body, "order_id": order_id})
+        return self.submit_ticket(customer_id, body, order_id)
+
+    def submit_ticket(self, customer_id: str, body: str, order_id: str = "") -> dict[str, Any]:
+        """Open a ticket from outside the agent (a customer writing in). Not an agent action, so not logged."""
         if self.store.get_customer(customer_id) is None:
             return {"ok": False, "error": "no such customer"}
         if order_id and self.store.get_order(order_id) is None:

@@ -32,6 +32,23 @@ def _type_ok(value: Any, json_type: str) -> bool:
     return False
 
 
+def validate_call(where: str, name: str, args: dict[str, Any], tools: list[ToolSpec]) -> None:
+    """Fail if a real model could not have produced this call: unknown tool, missing or extra
+    argument, or an argument of the wrong type."""
+    spec = next((t for t in tools if t.name == name), None)
+    if spec is None:
+        raise ScenarioError(f"{where}: unknown tool {name!r}")
+    props = spec.parameters["properties"]
+    missing = [r for r in spec.parameters["required"] if r not in args]
+    if missing:
+        raise ScenarioError(f"{where}: {name} is missing required argument(s) {missing}")
+    for key, value in args.items():
+        if key not in props:
+            raise ScenarioError(f"{where}: {name} got unexpected argument {key!r}")
+        if not _type_ok(value, props[key]["type"]):
+            raise ScenarioError(f"{where}: {name} argument {key!r} must be {props[key]['type']}, got {value!r}")
+
+
 class MockModel:
     def __init__(self, scenario: Scenario) -> None:
         self.scenario = scenario
@@ -62,17 +79,4 @@ class MockModel:
         return isinstance(content, dict) and content.get("status") in NOT_DONE
 
     def _check(self, step: Call, tools: list[ToolSpec], number: int) -> None:
-        where = f"scenario {self.scenario.id!r} step {number}"
-        spec = next((t for t in tools if t.name == step.name), None)
-        if spec is None:
-            raise ScenarioError(f"{where}: unknown tool {step.name!r}")
-        props = spec.parameters["properties"]
-        missing = [r for r in spec.parameters["required"] if r not in step.args]
-        if missing:
-            raise ScenarioError(f"{where}: {step.name} is missing required argument(s) {missing}")
-        for key, value in step.args.items():
-            if key not in props:
-                raise ScenarioError(f"{where}: {step.name} got unexpected argument {key!r}")
-            if not _type_ok(value, props[key]["type"]):
-                raise ScenarioError(
-                    f"{where}: {step.name} argument {key!r} must be {props[key]['type']}, got {value!r}")
+        validate_call(f"scenario {self.scenario.id!r} step {number}", step.name, step.args, tools)

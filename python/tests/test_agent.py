@@ -184,3 +184,17 @@ def test_an_unreachable_database_fails_loudly(monkeypatch, capsys):
 def test_cli_prints_the_run_id(capsys):
     assert main(["allowed_refund"]) == 0
     assert "run run-" in capsys.readouterr().out.splitlines()[0]
+
+
+def test_cli_creates_a_ticket_and_watches_it_resolved(capsys):
+    assert main(["--new-ticket", "The mug arrived chipped. Please refund $25.", "--customer", "C-1",
+                 "--order", "O-1001"]) == 0
+    out = capsys.readouterr().out
+    assert "Ticket T-1006: open -> resolved" in out and "Refunded $25 and emailed the customer." in out
+    assert "issue_refund" in out
+
+
+def test_cli_new_ticket_needs_a_valid_customer(capsys):
+    assert main(["--new-ticket", "x", "--customer", "C-0"]) == 2
+    assert "no such customer" in capsys.readouterr().err
+    assert main(["--new-ticket", "x"]) == 2

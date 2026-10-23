@@ -13,6 +13,13 @@ from .shop import Shop, new_run_id
 from .store import MemoryStore, Store
 
 
+def _mailer() -> Mailer:
+    host = os.environ.get("SMTP_HOST")
+    if host:
+        return SmtpMailer(host, int(os.environ.get("SMTP_PORT", "1025")), os.environ.get("SMTP_FROM", "support@example.com"))
+    return MemoryMailer()
+
+
 def new_shop(run_id: str | None = None) -> Shop:
     run_id = run_id or new_run_id()
     dsn = os.environ.get("DATABASE_URL")
@@ -23,11 +30,19 @@ def new_shop(run_id: str | None = None) -> Shop:
         store = PostgresStore(dsn, run_id)
     else:
         store = MemoryStore()
-    mailer: Mailer
-    host = os.environ.get("SMTP_HOST")
-    if host:
-        mailer = SmtpMailer(host, int(os.environ.get("SMTP_PORT", "1025")),
-                            os.environ.get("SMTP_FROM", "support@example.com"))
-    else:
-        mailer = MemoryMailer()
-    return Shop(store, run_id, mailer)
+    return Shop(store, run_id, _mailer())
+
+
+def open_shop(run_id: str) -> Shop | None:
+    """Re-open a run that already exists in Postgres, or None if there is no such run.
+    In-memory runs cannot be re-opened: whoever created one has to keep it."""
+    dsn = os.environ.get("DATABASE_URL")
+    if not dsn:
+        return None
+    from .pgstore import PostgresStore
+
+    store = PostgresStore(dsn, run_id, seed=False)
+    if not store.exists():
+        store.close()
+        return None
+    return Shop(store, run_id, _mailer())

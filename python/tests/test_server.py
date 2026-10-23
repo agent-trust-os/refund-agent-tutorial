@@ -130,3 +130,97 @@ def test_the_ticket_status_is_saved_in_postgres(base_url, monkeypatch):
                 conn.execute(f"DELETE FROM {table} WHERE run_id = %s", (run_id,))
     assert row == ("resolved", "Refunded $40 and emailed the customer.")
     assert others == 4
+
+
+# ---- the ticket workflow: create a run, submit a ticket, watch the agent resolve it ----
+
+def post_json(url, payload):
+    req = urllib.request.Request(url, data=json.dumps(payload).encode(), method="POST",
+                                 headers={"Content-Type": "application/json"})
+    try:
+        with urllib.request.urlopen(req) as r:
+            return r.status, json.load(r)
+    except urllib.error.HTTPError as e:
+        return e.code, json.load(e)
+
+
+def get_json(url):
+    try:
+        return get(url)
+    except urllib.error.HTTPError as e:
+        return e.code, json.load(e)
+
+
+def test_a_ticket_goes_from_submitted_to_resolved(base_url):
+    status, run = post(base_url + "/runs")
+    assert status == 201 and run["run_id"].startswith("run-")
+    assert [t["ticket_id"] for t in run["tickets"]] == ["T-1001", "T-1002", "T-1003", "T-1004", "T-1005"]
+    assert {"order_id", "customer_id", "total"} == set(run["orders"][0])
+    rid = run["run_id"]
+
+    status, created = post_json(f"{base_url}/runs/{rid}/tickets",
+                                {"customer_id": "C-1", "order_id": "O-1001",
+                                 "body": "The mug arrived chipped. Please refund $25."})
+    assert status == 201 and created["ticket"]["ticket_id"] == "T-1006" and created["ticket"]["status"] == "open"
+
+    assert get_json(f"{base_url}/runs/{rid}/tickets/T-1006")[1]["ticket"]["status"] == "open"
+    status, resolved = post(f"{base_url}/runs/{rid}/tickets/T-1006/resolve")
+    assert status == 200
+    assert resolved["ticket"]["status"] == "resolved"
+    assert resolved["ticket"]["note"] == "Refunded $25 and emailed the customer."
+    assert [a["tool"] for a in resolved["actions"]] == ["read_ticket", "lookup_order", "lookup_customer",
+                                                        "issue_refund", "send_email", "update_ticket"]
+
+    after = get_json(f"{base_url}/runs/{rid}/tickets/T-1006")[1]["ticket"]
+    assert after["status"] == "resolved"
+    state = get_json(f"{base_url}/runs/{rid}")[1]
+    assert state["tickets"]["T-1006"]["status"] == "resolved" and state["tickets"]["T-1001"]["status"] == "open"
+    assert [r["amount"] for r in state["refunds"]] == [25]
+    assert len(state["actions"]) == 6
+
+
+def test_a_ticket_that_cannot_be_understood_is_escalated(base_url):
+    rid = post(base_url + "/runs")[1]["run_id"]
+    post_json(f"{base_url}/runs/{rid}/tickets", {"customer_id": "C-1", "order_id": "O-1001", "body": "Where is my parcel?"})
+    resolved = post(f"{base_url}/runs/{rid}/tickets/T-1006/resolve")[1]
+    assert resolved["ticket"]["status"] == "escalated" and "colleague" in resolved["answer"]
+    assert get_json(f"{base_url}/runs/{rid}")[1]["refunds"] == []
+
+
+def test_runs_are_separate_workspaces(base_url):
+    a = post(base_url + "/runs")[1]["run_id"]
+    b = post(base_url + "/runs")[1]["run_id"]
+    post_json(f"{base_url}/runs/{a}/tickets", {"customer_id": "C-1", "body": "Please refund $5."})
+    assert len(get_json(f"{base_url}/runs/{a}")[1]["tickets"]) == 6
+    assert len(get_json(f"{base_url}/runs/{b}")[1]["tickets"]) == 5
+
+
+def test_workflow_errors(base_url):
+    rid = post(base_url + "/runs")[1]["run_id"]
+    assert get_json(base_url + "/runs/run-nope")[0] == 404
+    assert post(base_url + "/runs/run-nope/tickets/T-1001/resolve")[0] == 404
+    assert post_json(f"{base_url}/runs/{rid}/tickets", {"customer_id": "C-0", "body": "x"}) == (400, {"error": "no such customer"})
+    assert post_json(f"{base_url}/runs/{rid}/tickets", {"customer_id": "C-1"}) == (400, {"error": "body is required"})
+    assert post_json(f"{base_url}/runs/{rid}/tickets", [1])[0] == 400
+    assert get_json(f"{base_url}/runs/{rid}/tickets/T-9999")[0] == 404
+    assert post(f"{base_url}/runs/{rid}/tickets/T-9999/resolve")[0] == 404
+    assert post(f"{base_url}/runs/{rid}/tickets/T-1001/resolve")[0] == 200
+    status, body = post(f"{base_url}/runs/{rid}/tickets/T-1001/resolve")
+    assert status == 409 and "already" in body["error"]
+
+
+@pytest.mark.skipif(not REAL_DSN, reason="DATABASE_URL not set")
+def test_the_workflow_survives_between_requests_in_postgres(base_url, monkeypatch):
+    import psycopg
+
+    monkeypatch.setenv("DATABASE_URL", REAL_DSN)
+    rid = post(base_url + "/runs")[1]["run_id"]
+    post_json(f"{base_url}/runs/{rid}/tickets", {"customer_id": "C-1", "order_id": "O-1001", "body": "Please refund $25."})
+    post(f"{base_url}/runs/{rid}/tickets/T-1006/resolve")
+    state = get_json(f"{base_url}/runs/{rid}")[1]
+    with psycopg.connect(REAL_DSN, autocommit=True) as conn:
+        row = conn.execute("SELECT status FROM tickets WHERE run_id = %s AND ticket_id = 'T-1006'", (rid,)).fetchone()
+        for table in ["actions", "refunds", "tickets", "orders", "customers"]:
+            conn.execute(f"DELETE FROM {table} WHERE run_id = %s", (rid,))
+    assert row == ("resolved",) and state["tickets"]["T-1006"]["status"] == "resolved"
+    assert get_json(base_url + "/runs/run-nope")[0] == 404

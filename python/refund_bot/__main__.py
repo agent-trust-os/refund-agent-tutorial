@@ -8,7 +8,8 @@ import sys
 
 from .agent import RunResult, run
 from refund_core.models.mock import MockModel
-from refund_core.scenarios import BY_ID, SCENARIOS
+from refund_core.models.rules import RuleModel
+from refund_core.scenarios import BY_ID, SCENARIOS, Scenario
 from refund_core.config import new_shop
 
 
@@ -40,10 +41,35 @@ def format_run(scenario_id: str, ticket_id: str, run_id: str, result: RunResult)
     return "\n".join(lines)
 
 
+def _new_ticket(args: argparse.Namespace) -> int:
+    if not args.customer:
+        print("--new-ticket needs --customer, for example --customer C-1", file=sys.stderr)
+        return 2
+    try:
+        shop = new_shop()
+    except Exception as exc:
+        print(f"could not open the shop (check DATABASE_URL): {exc}", file=sys.stderr)
+        return 1
+    with shop:
+        submitted = shop.submit_ticket(args.customer, args.new_ticket, args.order)
+        if not submitted["ok"]:
+            print(submitted["error"], file=sys.stderr)
+            return 2
+        ticket_id = submitted["ticket"]["ticket_id"]
+        print(f"Submitted ticket {ticket_id} for {args.customer}: {args.new_ticket}\n")
+        scenario = Scenario(id=f"ticket-{ticket_id}", module=0, ticket_id=ticket_id, steps=[])
+        result = run(scenario, RuleModel(), shop)
+    print(format_run(scenario.id, ticket_id, shop.run_id, result))
+    return 0
+
+
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(prog="refund_bot", description="Run a Refund Bot scenario on the mock LLM.")
     parser.add_argument("scenario", nargs="?", help="scenario id (see --list)")
     parser.add_argument("--list", action="store_true", help="list scenario ids")
+    parser.add_argument("--new-ticket", metavar="TEXT", help="submit a new ticket with this text and let the agent resolve it")
+    parser.add_argument("--customer", help="customer id for --new-ticket, for example C-1")
+    parser.add_argument("--order", default="", help="order id for --new-ticket, for example O-1001")
     parser.add_argument("--serve", action="store_true", help="run as an HTTP service instead of one scenario")
     parser.add_argument("--host", default="127.0.0.1", help="address for --serve (default 127.0.0.1)")
     parser.add_argument("--port", type=int, default=8000, help="port for --serve (default 8000)")
@@ -58,6 +84,8 @@ def main(argv: list[str] | None = None) -> int:
         for s in SCENARIOS:
             print(s.id)
         return 0
+    if args.new_ticket is not None:
+        return _new_ticket(args)
     if args.scenario is None:
         parser.print_usage(sys.stderr)
         return 2

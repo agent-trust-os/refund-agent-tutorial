@@ -47,6 +47,10 @@ class PostgresStore:
     def _one(self, sql: str, *params: Any) -> dict[str, Any] | None:
         return _plain(self._conn.execute(sql, params).fetchone())
 
+    def exists(self) -> bool:
+        """Whether this run has been seeded."""
+        return self._conn.execute("SELECT 1 FROM customers WHERE run_id = %s LIMIT 1", (self.run_id,)).fetchone() is not None
+
     def get_ticket(self, ticket_id: str) -> dict[str, Any] | None:
         return self._one("SELECT ticket_id, customer_id, order_id, body, status, note FROM tickets "
                          "WHERE run_id = %s AND ticket_id = %s", self.run_id, ticket_id)

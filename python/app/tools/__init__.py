@@ -29,12 +29,23 @@ ALL_TOOLS = [read_ticket, lookup_order, lookup_customer, issue_refund, send_emai
 Tool = Callable[..., dict[str, Any]]
 
 
-def make_tools(db: Session, ticket_id: str | None) -> dict[str, Tool]:
-    """The tools for one ticket, by name, ready for the model."""
-    # TODO(AgentTrust 4/11): add a governed= parameter and wrap each tool. Paste from docs/guides/harness.html#todo-4
-    # TODO(AgentTrust 9/11): accept governed="client" as well. Paste from docs/guides/direct-api.html#todo-9
+def make_tools(db: Session, ticket_id: str | None, governed: str | None = None) -> dict[str, Tool]:
+    """The tools for one ticket, by name, ready for the model. ``governed`` names how AgentTrust guards them."""
     ctx = ToolContext(db, ticket_id)
-    return {tool.__name__: _for_the_model(tool, ctx) for tool in ALL_TOOLS}
+    guard = _guard(governed)
+    return {tool.__name__: guard(_for_the_model(tool, ctx)) for tool in ALL_TOOLS}
+
+
+def _guard(governed: str | None) -> Callable[[Tool], Tool]:
+    """The wrapper that asks AgentTrust before a tool runs. With no mode set, tools run as they are.
+
+    It is applied outside the action log, so a blocked call never enters the log of what really ran.
+    """
+    if governed is None:
+        return lambda tool: tool
+    # TODO(AgentTrust 4/11): guard the tools with @harness when governed == "harness". Paste from docs/guides/harness.html#todo-4
+    # TODO(AgentTrust 9/11): guard them with the direct client when governed == "client". Paste from docs/guides/direct-api.html#todo-9
+    raise ValueError(f"governed={governed!r} is not set up yet: finish the AgentTrust TODOs first")
 
 
 def _for_the_model(tool: Tool, ctx: ToolContext) -> Tool:

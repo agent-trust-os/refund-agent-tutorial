@@ -50,7 +50,7 @@ Action log (what really ran):
 The action log comes from the shop itself, not from the agent or the model. It is the proof of what
 really ran, and the tutorial uses it to show what AgentTrust stops.
 
-`refund-bot --list` shows the six scenarios. To test the shared code on its own:
+`refund-bot --list` shows the seven scenarios. To test the shared code on its own:
 `cd core && uv sync && uv run pytest`.
 
 ### Use the real Postgres and Mailpit from the command line
@@ -88,7 +88,7 @@ That starts three services:
 Play a scenario, then look at what it left behind:
 
 ```
-curl localhost:8000/scenarios                          # the six scenarios
+curl localhost:8000/scenarios                          # the seven scenarios
 curl -X POST localhost:8000/run/allowed_refund         # play one; returns a run_id, the answer and the action log
 open http://localhost:8025                             # the refund email, in Mailpit
 docker compose exec postgres psql -U refund -d refund \
@@ -146,6 +146,16 @@ Action log (what really ran):
   5. update_ticket {"ticket_id": "T-1001", "status": "resolved", "note": "Refunded $40 and emailed the customer."}
 ```
 
+The `follow_up` scenario does the same refund and also opens a second ticket for the carrier:
+
+```
+curl -X POST localhost:8000/run/follow_up
+```
+
+The response has `created_tickets` with `T-1006`, status `open`, about order `O-1001`. In Postgres the
+`tickets` query above now returns six rows: `T-1001` resolved, `T-1006` open, the rest still open. New
+tickets are numbered after the fixtures (`T-1006`, `T-1007`, ...) and belong to their run only.
+
 Now play the bad ones. Without AgentTrust every one of them also ends with the ticket `resolved`:
 
 | Scenario | The ticket says | What really happened |
@@ -162,9 +172,9 @@ colleague will reply.
 ## What is in the box
 
 - **The agent:** reads a ticket, looks up the order and customer, refunds, replies or escalates.
-- **Seven tools:** `read_ticket`, `lookup_order`, `lookup_customer`, `issue_refund`, `send_email`,
-  `update_ticket` (open, resolved or escalated), and `purge_orders` (a destructive tool the agent should
-  never be allowed to use).
+- **Eight tools:** `read_ticket`, `lookup_order`, `lookup_customer`, `issue_refund`, `send_email`,
+  `create_ticket` (opens a new ticket, for example a follow-up for another team), `update_ticket` (open,
+  resolved or escalated), and `purge_orders` (a destructive tool the agent should never be allowed to use).
 - **The mock LLM:** replays a scripted scenario and checks every call against the tool's schema,
   so a script can never do what a real model could not. Deterministic, offline, free.
 - **A real shop behind it:** Postgres for the data and Mailpit for the email, when you run the stack.

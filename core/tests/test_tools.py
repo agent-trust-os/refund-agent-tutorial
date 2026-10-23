@@ -4,13 +4,13 @@ from refund_core.models.base import tool_spec
 from refund_core.shop import Shop
 from refund_core.tools import make_tools
 
-NAMES = ["read_ticket", "lookup_order", "lookup_customer", "issue_refund", "send_email", "update_ticket",
-         "purge_orders"]
+NAMES = ["read_ticket", "lookup_order", "lookup_customer", "issue_refund", "send_email", "create_ticket",
+         "update_ticket", "purge_orders"]
 
 
 def test_every_tool_has_a_spec():
     tools = make_tools(Shop())
-    assert list(tools) == NAMES and len(NAMES) == 7
+    assert list(tools) == NAMES and len(NAMES) == 8
     specs = [tool_spec(fn) for fn in tools.values()]
     assert [s.name for s in specs] == NAMES
     assert all(s.description for s in specs)
@@ -25,6 +25,16 @@ def test_issue_refund_spec():
     assert props["order_id"]["type"] == "string"
     assert props["currency"]["default"] == "USD"
     assert "user" not in props and "input" not in props
+
+
+def test_create_ticket_spec_and_call():
+    shop = Shop()
+    tools = make_tools(shop)
+    spec = tool_spec(tools["create_ticket"])
+    assert spec.parameters["required"] == ["customer_id", "body"]
+    assert spec.parameters["properties"]["order_id"]["default"] == ""
+    result = tools["create_ticket"](customer_id="C-1", body="Follow up.", order_id="O-1001", user="bot", input="x")
+    assert result["ticket"]["ticket_id"] == "T-1006" and shop.tickets["T-1006"]["status"] == "open"
 
 
 def test_update_ticket_spec_and_call():

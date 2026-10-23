@@ -31,6 +31,10 @@ def format_run(scenario_id: str, ticket_id: str, run_id: str, result: RunResult)
         if result.ticket["note"]:
             lines += [f"  note: {result.ticket['note']}"]
         lines += [""]
+    for t in result.created_tickets:
+        lines += [f"Created ticket {t['ticket_id']} ({t['status']}): {t['body']}"]
+    if result.created_tickets:
+        lines += [""]
     lines += ["Action log (what really ran):"]
     lines += [f"  {a['seq']}. {a['tool']} {json.dumps(a['args'])}" for a in result.actions] or ["  (nothing)"]
     return "\n".join(lines)

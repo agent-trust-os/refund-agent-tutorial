@@ -75,3 +75,22 @@ def test_update_ticket_rejects_an_unknown_status_and_an_unknown_ticket():
     assert shop.update_ticket("T-1001", "done", "") == {"ok": False, "error": "status must be open, resolved or escalated"}
     assert shop.update_ticket("T-0000", "resolved", "") == {"ok": False, "error": "no such ticket"}
     assert shop.tickets["T-1001"]["status"] == "open"
+
+
+def test_create_ticket_opens_a_new_open_ticket_and_is_logged():
+    shop = Shop()
+    result = shop.create_ticket("C-1", "Late delivery: ask the carrier why.", "O-1001")
+    assert result["ok"] and result["ticket"]["ticket_id"] == "T-1006"
+    assert result["ticket"]["status"] == "open" and result["ticket"]["order_id"] == "O-1001"
+    assert shop.tickets["T-1006"]["body"] == "Late delivery: ask the carrier why."
+    assert shop.count("create_ticket") == 1 and len(shop.tickets) == 6
+
+
+def test_create_ticket_without_an_order_and_with_bad_references():
+    shop = Shop()
+    assert shop.create_ticket("C-2", "General question.", "")["ticket"]["order_id"] is None
+    assert shop.create_ticket("C-0", "x", "") == {"ok": False, "error": "no such customer"}
+    assert shop.create_ticket("C-1", "x", "O-0") == {"ok": False, "error": "no such order"}
+    assert shop.create_ticket("C-1", "   ", "") == {"ok": False, "error": "body must not be empty"}
+    assert len(shop.tickets) == 6
+    assert shop.count("create_ticket") == 4

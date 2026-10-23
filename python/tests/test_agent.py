@@ -67,6 +67,21 @@ def test_ungoverned_the_bad_runs_also_close_their_tickets():
         assert result.ticket["ticket_id"] == ticket_id and result.ticket["status"] == "resolved"
 
 
+def test_a_follow_up_ticket_is_created_next_to_the_resolved_one():
+    result, shop = play("follow_up")
+    assert shop.tickets["T-1001"]["status"] == "resolved"
+    new = shop.tickets["T-1006"]
+    assert new["status"] == "open" and new["customer_id"] == "C-1" and new["order_id"] == "O-1001"
+    assert [t["ticket_id"] for t in result.created_tickets] == ["T-1006"]
+    assert [a["tool"] for a in result.actions] == ["read_ticket", "lookup_order", "issue_refund", "create_ticket",
+                                                   "send_email", "update_ticket"]
+
+
+def test_runs_without_a_follow_up_create_no_tickets():
+    result, _ = play("allowed_refund")
+    assert result.created_tickets == []
+
+
 def test_offline():
     for scenario in SCENARIOS:
         play(scenario.id)
@@ -145,6 +160,13 @@ def test_cli_shows_that_the_ticket_is_resolved(capsys):
     out = capsys.readouterr().out
     assert "Ticket T-1001: open -> resolved" in out
     assert "Refunded $40 and emailed the customer." in out
+
+
+def test_cli_shows_the_ticket_it_created(capsys):
+    assert main(["follow_up"]) == 0
+    out = capsys.readouterr().out
+    assert "Ticket T-1001: open -> resolved" in out
+    assert "Created ticket T-1006 (open): Late delivery" in out
 
 
 def test_cli_rejects_an_unknown_scenario(capsys):

@@ -57,6 +57,13 @@ class PostgresStore:
             "WHERE run_id = %s ORDER BY ticket_id", (self.run_id,)).fetchall()
         return {r["ticket_id"]: _plain(r) for r in rows}
 
+    def add_ticket(self, customer_id: str, order_id: str | None, body: str) -> dict[str, Any]:
+        count = self._conn.execute("SELECT count(*) AS n FROM tickets WHERE run_id = %s", (self.run_id,)).fetchone()["n"]
+        return self._one("INSERT INTO tickets (run_id, ticket_id, customer_id, order_id, body) "
+                         "VALUES (%s, %s, %s, %s, %s) "
+                         "RETURNING ticket_id, customer_id, order_id, body, status, note",
+                         self.run_id, f"T-{1000 + count + 1}", customer_id, order_id, body)
+
     def update_ticket(self, ticket_id: str, status: str, note: str) -> dict[str, Any] | None:
         return self._one("UPDATE tickets SET status = %s, note = %s WHERE run_id = %s AND ticket_id = %s "
                          "RETURNING ticket_id, customer_id, order_id, body, status, note",

@@ -90,6 +90,16 @@ class Shop:
         self.store.log_action("send_email", {"to": to, "subject": subject, "body": body})
         return {"ok": True, "message_id": self.mailer.send(to, subject, body)}
 
+    def create_ticket(self, customer_id: str, body: str, order_id: str = "") -> dict[str, Any]:
+        self.store.log_action("create_ticket", {"customer_id": customer_id, "body": body, "order_id": order_id})
+        if self.store.get_customer(customer_id) is None:
+            return {"ok": False, "error": "no such customer"}
+        if order_id and self.store.get_order(order_id) is None:
+            return {"ok": False, "error": "no such order"}
+        if not body.strip():
+            return {"ok": False, "error": "body must not be empty"}
+        return {"ok": True, "ticket": self.store.add_ticket(customer_id, order_id or None, body)}
+
     def update_ticket(self, ticket_id: str, status: str, note: str) -> dict[str, Any]:
         self.store.log_action("update_ticket", {"ticket_id": ticket_id, "status": status, "note": note})
         if status not in TICKET_STATUSES:

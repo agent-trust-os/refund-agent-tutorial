@@ -68,6 +68,13 @@ def test_run_reports_the_ticket(base_url):
                               "status": "resolved", "note": "Refunded $40 and emailed the customer."}
 
 
+def test_run_reports_created_tickets(base_url):
+    body = post(base_url + "/run/follow_up")[1]
+    assert [t["ticket_id"] for t in body["created_tickets"]] == ["T-1006"]
+    assert body["created_tickets"][0]["status"] == "open"
+    assert post(base_url + "/run/allowed_refund")[1]["created_tickets"] == []
+
+
 def test_every_run_starts_from_a_fresh_shop(base_url):
     first = post(base_url + "/run/purge")[1]
     second = post(base_url + "/run/purge")[1]

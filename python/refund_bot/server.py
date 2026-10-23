@@ -62,6 +62,7 @@ class Handler(BaseHTTPRequestHandler):
             "transcript": [asdict(m) for m in result.transcript],
             "actions": result.actions,
             "ticket": result.ticket,
+            "created_tickets": result.created_tickets,
         })
 
 

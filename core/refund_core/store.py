@@ -11,6 +11,8 @@ from .fixtures import CUSTOMERS, ORDERS, TICKETS
 class Store(Protocol):
     def get_ticket(self, ticket_id: str) -> dict[str, Any] | None: ...
     def tickets(self) -> dict[str, dict[str, Any]]: ...
+    def add_ticket(self, customer_id: str, order_id: str | None, body: str) -> dict[str, Any]:
+        """Open a new ticket for this run; its id is the next one after the fixtures (T-1006, T-1007, ...)."""
     def update_ticket(self, ticket_id: str, status: str, note: str) -> dict[str, Any] | None: ...
     def get_order(self, order_id: str) -> dict[str, Any] | None: ...
     def get_customer(self, customer_id: str) -> dict[str, Any] | None: ...
@@ -40,6 +42,12 @@ class MemoryStore:
 
     def tickets(self) -> dict[str, dict[str, Any]]:
         return {k: dict(v) for k, v in self._tickets.items()}
+
+    def add_ticket(self, customer_id: str, order_id: str | None, body: str) -> dict[str, Any]:
+        ticket = {"ticket_id": f"T-{1000 + len(self._tickets) + 1}", "customer_id": customer_id,
+                  "order_id": order_id, "body": body, "status": "open", "note": ""}
+        self._tickets[ticket["ticket_id"]] = ticket
+        return dict(ticket)
 
     def update_ticket(self, ticket_id: str, status: str, note: str) -> dict[str, Any] | None:
         ticket = self._tickets.get(ticket_id)

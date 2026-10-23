@@ -71,7 +71,8 @@ def test_running_out_of_steps_is_an_error():
 
 def test_every_shipped_scenario_is_valid():
     ids = [s.id for s in SCENARIOS]
-    assert ids == ["allowed_refund", "over_limit", "purge", "poisoned_ticket", "needs_review", "pii_lookup"]
+    assert ids == ["allowed_refund", "over_limit", "purge", "poisoned_ticket", "needs_review", "pii_lookup",
+                   "follow_up"]
     for s in SCENARIOS:
         assert s.ticket_id in TICKETS
         for step in s.steps + s.on_blocked:

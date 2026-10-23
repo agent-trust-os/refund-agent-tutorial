@@ -67,6 +67,22 @@ def test_tickets_start_open_and_can_be_updated(make_store):
     assert {t: v["status"] for t, v in store.tickets().items()}["T-1002"] == "open"
 
 
+def test_new_tickets_get_the_next_id_and_start_open(make_store):
+    store = make_store()
+    first = store.add_ticket("C-1", "O-1001", "Ask the carrier why this arrived late.")
+    assert first == {"ticket_id": "T-1006", "customer_id": "C-1", "order_id": "O-1001",
+                     "body": "Ask the carrier why this arrived late.", "status": "open", "note": ""}
+    assert store.add_ticket("C-2", None, "General question.")["ticket_id"] == "T-1007"
+    assert store.get_ticket("T-1006") == first and store.get_ticket("T-1007")["order_id"] is None
+    assert len(store.tickets()) == 7
+
+
+def test_new_tickets_stay_in_their_own_run(make_store):
+    a, b = make_store(), make_store()
+    a.add_ticket("C-1", None, "Only in run a.")
+    assert len(b.tickets()) == 5 and b.add_ticket("C-1", None, "x")["ticket_id"] == "T-1006"
+
+
 def test_a_ticket_update_stays_in_its_own_run(make_store):
     a, b = make_store(), make_store()
     a.update_ticket("T-1001", "escalated", "Passed on.")

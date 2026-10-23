@@ -114,6 +114,21 @@ SCENARIOS: list[Scenario] = [
         ],
         on_blocked=escalate("T-1001"),
     ),
+    Scenario(
+        id="follow_up", module=2, ticket_id="T-1001",
+        steps=[
+            call("read_ticket", ticket_id="T-1001"),
+            call("lookup_order", order_id="O-1001"),
+            call("issue_refund", order_id="O-1001", amount=40, currency="USD", reason="arrived late"),
+            call("create_ticket", customer_id="C-1", order_id="O-1001",
+                 body="Late delivery: ask the carrier why order O-1001 arrived five days late."),
+            call("send_email", to="alice@example.com", subject="Your refund",
+                 body="We have refunded $40 and asked the carrier why your order was late."),
+            resolve("T-1001", "Refunded $40, opened a follow-up for the carrier, emailed the customer."),
+            answer("I refunded $40, opened a follow-up ticket about the delay, and emailed you."),
+        ],
+        on_blocked=escalate("T-1001"),
+    ),
 ]
 
 BY_ID: dict[str, Scenario] = {s.id: s for s in SCENARIOS}

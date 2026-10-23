@@ -4,6 +4,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import Any, Callable
 
+from refund_core.fixtures import TICKETS
 from refund_core.models.base import FinalAnswer, Message, Model, ToolCall, tool_spec
 from refund_core.scenarios import Scenario
 from refund_core.shop import Shop
@@ -18,6 +19,7 @@ class RunResult:
     answer: str
     actions: list[dict[str, Any]]
     ticket: dict[str, Any] | None   # the ticket after the run: its status and note
+    created_tickets: list[dict[str, Any]]   # tickets the agent opened during the run
 
 
 def call_tool(fn: Callable[..., dict[str, Any]], call: ToolCall, request: str) -> dict[str, Any]:
@@ -51,4 +53,5 @@ def run(scenario: Scenario, model: Model, shop: Shop, max_steps: int = 10) -> Ru
             result = call_tool(fn, step, request)
         messages.append(Message("tool", result, tool_call_id=step.id))
     return RunResult(transcript=messages, answer=answer, actions=list(shop.actions),
-                     ticket=shop.tickets.get(scenario.ticket_id))
+                     ticket=shop.tickets.get(scenario.ticket_id),
+                     created_tickets=[t for k, t in shop.tickets.items() if k not in TICKETS])

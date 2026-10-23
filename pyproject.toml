@@ -1,0 +1,21 @@
+[project]
+name = "refund-bot"
+version = "0.1.0"
+description = "A refund support agent on a scripted mock LLM, the base for the AgentTrust tutorial."
+requires-python = ">=3.12"
+dependencies = []
+
+[build-system]
+requires = ["uv_build>=0.11.28,<0.12.0"]
+build-backend = "uv_build"
+
+[tool.uv.build-backend]
+module-root = ""
+
+[dependency-groups]
+dev = [
+    "pytest>=9.1.1",
+]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]

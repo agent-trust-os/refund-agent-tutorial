@@ -9,7 +9,7 @@ set -a; . ./.env; set +a
 AGENT="${AGENTRUST_AGENT_ID:-refund-bot}"
 call() {  # path, json body
   curl -sS -X POST "$AGENTRUST_GATEWAY_URL/v1/runtime/$1" \
-    -H "Authorization: Bearer $AGENTRUST_KEY" -H "Content-Type: application/json" -d "$2"
+    -H "X-AgentTrust-Token: $AGENTRUST_KEY" -H "Content-Type: application/json" -d "$2"
   echo
 }
 case "${1:-}" in

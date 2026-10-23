@@ -15,7 +15,7 @@ from typing import Any, Callable
 def _post(url: str, key: str, path: str, body: dict[str, Any]) -> tuple[int, dict[str, Any]]:
     request = urllib.request.Request(
         f"{url}{path}", data=json.dumps(body).encode(), method="POST",
-        headers={"Content-Type": "application/json", "Authorization": f"Bearer {key}"})
+        headers={"Content-Type": "application/json", "X-AgentTrust-Token": key, "Authorization": f"Bearer {key}"})
     try:
         with urllib.request.urlopen(request, timeout=15) as response:
             return response.status, json.loads(response.read() or b"{}")
@@ -29,7 +29,7 @@ def _post(url: str, key: str, path: str, body: dict[str, Any]) -> tuple[int, dic
 def pre_check(url: str, key: str, agent: str, action: str, params: dict[str, Any]) -> tuple[int, str, str]:
     """(http status, outcome, reason) of one pre-check."""
     body = {"agent_id": agent, "framework": "REST", "action": action, "params": params,
-            "user": "support-bot", "input": "", "model": "mock"}
+            "user": "support-bot", "input": "refund-bot agenttrust check", "model": "mock"}
     status, data = _post(url, key, "/v1/runtime/pre-check", body)
     decision = data.get("decision", {}) if isinstance(data, dict) else {}
     return status, decision.get("outcome", ""), str(decision.get("reason", data.get("detail", "")))

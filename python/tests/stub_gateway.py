@@ -36,7 +36,7 @@ class StubGateway:
             def do_POST(self) -> None:
                 body = json.loads(self.rfile.read(int(self.headers["Content-Length"])))
                 stub.seen.append({"path": self.path, **body})
-                if self.headers.get("Authorization") != f"Bearer {GOOD_KEY}":
+                if self.headers.get("X-AgentTrust-Token") != GOOD_KEY:
                     return self._send(401, {"detail": "invalid key"})
                 outcome, reason = "approve", "within policy"
                 if self.path.endswith("/pre-check"):

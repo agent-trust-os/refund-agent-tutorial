@@ -314,7 +314,7 @@ def tool_spec(fn: Callable[..., Any]) -&gt; ToolSpec:
 
 <div class="label">Step 6 — Assemble the tools, and place the guard</div>
 <p><code>make_tools</code> turns the plain functions into what the model calls. It fills in the context, adds the hidden arguments, logs the action, and then (the governance part) wraps each tool with the guard. The guard is applied <strong>outside</strong> the logging wrapper, so a call that is blocked never reaches the action log. With no mode set the tools run as they are, so you can still reproduce the problem.</p>
-<div class="path">python/app/tools/__init__.py</div><pre><code>&quot;&quot;&quot;The tools the agent can call. This is where AgentTrust is added in phase 2.
+<div class="path">python/app/tools/__init__.py</div><pre><code>&quot;&quot;&quot;The tools the agent can call. This is where AgentTrust guards each tool.
 
 Each tool is a plain function in this folder whose first argument is a ``ToolContext`` (the database and the
 ticket being worked on). ``make_tools`` turns them into the functions the model sees:
@@ -363,7 +363,7 @@ def _guard(governed: str | None) -&gt; Callable[[Tool], Tool]:
         from .governance import governed_harness
 
         return governed_harness
-    raise ValueError(f&quot;governed={governed!r} is not set up yet: finish the AgentTrust TODOs first&quot;)
+    raise ValueError(f&quot;unknown governed mode {governed!r}&quot;)
 
 
 def _for_the_model(tool: Tool, ctx: ToolContext) -&gt; Tool:
@@ -385,11 +385,7 @@ def _for_the_model(tool: Tool, ctx: ToolContext) -&gt; Tool:
 
 <div class="label">Step 7 — The governance layer</div>
 <p>The heart of the guide. <code>governed_harness</code> wraps one tool with <code>@harness</code> and turns the SDK's exceptions into plain tool results, so the loop and the model see a normal answer. Three options exist because the SDK's defaults would let a risky call through: <code>block_on_review</code>, <code>raise_on_error</code> and the failure mode. It refuses to start with no gateway URL or key, rather than send checks to your own app on port 8000. And it sets <code>user</code>, because <code>@harness</code> reads it only from the call's keyword arguments.</p>
-<div class="path">python/app/tools/governance.py</div><pre><code>&quot;&quot;&quot;AgentTrust governance for the tools. Until you fill in the TODOs below, the tools run ungoverned.
-
-``harness`` article: https://github.com/agent-trust-os/refund-agent-tutorial (docs/guides/harness.html)
-``direct-api`` article: docs/guides/direct-api.html
-&quot;&quot;&quot;
+<div class="path">python/app/tools/governance.py</div><pre><code>&quot;&quot;&quot;AgentTrust governance for the tools: each tool is wrapped so AgentTrust is asked before it runs.&quot;&quot;&quot;
 from __future__ import annotations
 
 import functools
@@ -447,7 +443,7 @@ def governed_harness(tool: Tool) -&gt; Tool:
 
 The loop knows nothing about refunds or tickets. It only moves messages between the model and the tools,
 so the model can be swapped (scripted, rule-based, later a real LLM) and the tools can be wrapped
-(later by AgentTrust) without changing this file.
+(by AgentTrust) without changing this file.
 &quot;&quot;&quot;
 from __future__ import annotations
 

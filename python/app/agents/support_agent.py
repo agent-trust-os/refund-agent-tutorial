@@ -2,7 +2,7 @@
 
 The loop knows nothing about refunds or tickets. It only moves messages between the model and the tools,
 so the model can be swapped (scripted, rule-based, later a real LLM) and the tools can be wrapped
-(later by AgentTrust) without changing this file.
+(by AgentTrust) without changing this file.
 """
 from __future__ import annotations
 

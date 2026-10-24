@@ -1,3 +1,0 @@
-# target: python/app/cli.py
-# marker: 6
-ticket.add_argument("--governed", choices=["harness", "client"], help="ask AgentTrust before each tool runs")

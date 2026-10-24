@@ -4,7 +4,7 @@ version = "0.1.0"
 description = "Refund Bot: a customer-support agent on a mock LLM, with FastAPI, SQLAlchemy and Mailpit. The base for the AgentTrust tutorial."
 requires-python = ">=3.12"
 dependencies = [
-    # TODO(AgentTrust 2/11): add agentrust-py==0.0.4 here. Paste from docs/guides/harness.html#todo-2
+    # TODO(AgentTrust 2/10): add agentrust-py==0.0.4 here. Paste from docs/guides/harness.html#todo-2
     "alembic>=1.13",
     "fastapi>=0.115",
     "psycopg[binary]>=3.2",

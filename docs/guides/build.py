@@ -17,10 +17,12 @@ HERE = Path(__file__).parent
 
 
 def snippet(name: str) -> str:
+    """A snippet to add where a TODO comment is. Every snippet only adds code, so nothing has to be deleted."""
     lines = (HERE / "snippets" / f"{name}.txt").read_text().splitlines()
     target = next(line.split(": ", 1)[1] for line in lines if line.startswith("# target: "))
     body = [line for line in lines if not re.match(r"# (target|marker|replaces): ", line)]
-    return f'<div class="path">{html.escape(target)}</div><pre><code>{html.escape(chr(10).join(body))}</code></pre>'
+    return (f'<div class="path">{html.escape(target)}: add this where the TODO comment is</div>'
+            f'<pre><code>{html.escape(chr(10).join(body))}</code></pre>')
 
 
 def repo_file(path: str) -> str:

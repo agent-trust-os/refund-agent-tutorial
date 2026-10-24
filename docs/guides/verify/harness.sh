@@ -13,13 +13,13 @@ fail() { echo "FAIL step $1: $2" >&2; exit 1; }
 
 git clone -q --branch "$TEMPLATE_REF" "$REPO" "$WORK/app"; cd "$WORK/app"
 step 1 "cloned the template"
-[ "$(./scripts/todos.sh | head -1)" = "0 of 11 done" ] || fail 2 "template should start with 0 of 11 done"
+[ "$(./scripts/todos.sh | head -1)" = "0 of 10 done" ] || fail 2 "template should start with 0 of 10 done"
 (cd python && uv run --quiet pytest -q >/dev/null 2>&1) || fail 2 "template tests fail"
-step 2 "template runs, 0 of 11 done, tests pass"
+step 2 "template runs, 0 of 10 done, tests pass"
 
-python3 docs/guides/apply_snippets.py --only 1-7 >/dev/null
-[ "$(./scripts/todos.sh | head -1)" = "7 of 11 done" ] || fail 3 "expected 7 of 11 done"
-step 3 "applied the snippets of TODOs 1 to 7: 7 of 11 done"
+python3 docs/guides/apply_snippets.py --only 1-6 >/dev/null
+[ "$(./scripts/todos.sh | head -1)" = "6 of 10 done" ] || fail 3 "expected 6 of 10 done"
+step 3 "applied the snippets of TODOs 1 to 6: 6 of 10 done"
 
 # the replay equals the solution branch, file by file (tests and snippet tooling aside)
 git fetch -q "$REPO" "$SOLUTION_REF"

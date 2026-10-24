@@ -1,8 +1,5 @@
 # target: python/app/llm/rules.py
-# marker: 7
-# replaces: 2
-if self._failed:            # read_ticket was refused: close the ticket from the id in the request
-    if "closed" in self._done:
-        return FinalAnswer(ESCALATED_TEXT)
+# marker: 6
+if self._failed and "closed" not in self._done:     # read_ticket was refused: close the ticket from the id in the request
     ticket_id = TICKET_ID.search(str(messages[0].content)).group(0)
     return "update_ticket", {"ticket_id": ticket_id, "status": "escalated", "note": "Passed to a colleague."}

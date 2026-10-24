@@ -50,7 +50,7 @@ def show(result: RunResult) -> str:
         lines.append(f"Created ticket {t['ticket_id']} ({t['status']}): {t['body']}")
     if result.created_tickets:
         lines.append("")
-    # TODO(AgentTrust 11/11): print each decision's envelope id and its Console link. Paste from docs/guides/direct-api.html#todo-11
+    # TODO(AgentTrust 10/10): print each decision's envelope id and its Console link. Paste from docs/guides/direct-api.html#todo-10
     lines.append("Action log (what really ran):")
     lines += [f"  {n}. {a['tool']} {json.dumps(a['args'])}" for n, a in enumerate(result.actions, 1)] or ["  (nothing)"]
     return "\n".join(lines)
@@ -69,9 +69,9 @@ def main(argv: list[str] | None = None) -> int:
     ticket.add_argument("text")
     ticket.add_argument("--customer", required=True, help="for example C-1")
     ticket.add_argument("--order", default="", help="for example O-1001")
+    ticket.add_argument("--governed", choices=["harness", "client"], help="ask AgentTrust before each tool runs")
     listing = commands.add_parser("tickets", help="list tickets")
     listing.add_argument("--status", choices=["open", "resolved", "escalated"])
-    # TODO(AgentTrust 6/11): add --governed to "ticket" (harness now, client in TODO 9). Paste from docs/guides/harness.html#todo-6
     commands.add_parser("reset", help="put the starting data back")
     agenttrust = commands.add_parser("agenttrust", help="AgentTrust helpers")
     agenttrust.add_argument("action", choices=["check"])
@@ -102,8 +102,7 @@ def main(argv: list[str] | None = None) -> int:
             if args.command == "ticket":
                 created = submit_ticket(db, args.customer, args.text, args.order)
                 print(f"Submitted ticket {created['ticket_id']} for {args.customer}: {args.text}\n")
-                # TODO(AgentTrust 6/11): pass args.governed on. Paste from docs/guides/harness.html#todo-6
-                print(show(resolve_ticket(db, created["ticket_id"])))
+                print(show(resolve_ticket(db, created["ticket_id"], args.governed)))
             elif args.command == "tickets":
                 for t in tickets.list_tickets(db, args.status):
                     print(f"{t['ticket_id']}  {t['status']:<10} {t['customer_id']:<4} {t['order_id'] or '-':<7} {t['body'][:60]}")

@@ -1,4 +1,0 @@
-# target: python/app/cli.py
-# marker: 6
-# replaces: 1
-print(show(resolve_ticket(db, created["ticket_id"], args.governed)))

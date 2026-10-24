@@ -106,7 +106,7 @@ class RuleModel:
 
     def _decide(self, messages: list[Message]) -> tuple[str, dict[str, Any]] | FinalAnswer:
         if self._ticket is None:
-            # TODO(AgentTrust 7/11): escalate the ticket even when read_ticket itself was blocked. Paste from docs/guides/harness.html#todo-7
+            # TODO(AgentTrust 6/10): escalate the ticket even when read_ticket itself was blocked. Paste from docs/guides/harness.html#todo-6
             if self._failed:
                 return FinalAnswer(ESCALATED_TEXT)
             match = TICKET_ID.search(str(messages[0].content))

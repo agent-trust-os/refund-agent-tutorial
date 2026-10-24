@@ -53,8 +53,7 @@ def run(ticket_id: str, model: Model, db: Session, max_steps: int = 10, governed
     ``max_steps`` is a local safety net so a looping model cannot run forever. It is not a governance control.
     ``governed`` says how AgentTrust guards the tools: None (not at all), "harness" or "client".
     """
-    # TODO(AgentTrust 5/11): take a governed= argument and pass it to make_tools. Paste from docs/guides/harness.html#todo-5
-    tools = make_tools(db, ticket_id)
+    tools = make_tools(db, ticket_id, governed)
     specs = [tool_spec(fn) for fn in tools.values()]
     before = {t["ticket_id"] for t in tickets.list_tickets(db)}
     request = ticket_request(ticket_id)
@@ -78,7 +77,7 @@ def run(ticket_id: str, model: Model, db: Session, max_steps: int = 10, governed
         log.debug("%s | result | %s", ticket_id, json.dumps(result))
         messages.append(Message("tool", result, tool_call_id=step.id))
 
-    # TODO(AgentTrust 10/11): check the final answer with validate before returning it. Paste from docs/guides/direct-api.html#todo-10
+    # TODO(AgentTrust 9/10): check the final answer with validate before returning it. Paste from docs/guides/direct-api.html#todo-9
     ticket = tickets.get_ticket(db, ticket_id)
     log.info("%s | done  | ticket %s | answer: %s", ticket_id, ticket["status"] if ticket else "missing", answer)
     return RunResult(

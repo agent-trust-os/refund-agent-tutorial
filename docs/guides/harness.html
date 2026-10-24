@@ -123,6 +123,8 @@ Ticket T-1006: open -&gt; resolved
 <h2>6 · Setup steps</h2>
 <p>This is what actually has to happen, in order, to get the Refund Bot from "any tool call runs" to "the gateway is asked first". You need Python 3.12, <a href="https://docs.astral.sh/uv/">uv</a> and an account at <code>https://console.agent-trust.tech</code>.</p>
 
+<p>From Step 7 on you edit the code. Each step names a file and shows a block of code: <strong>replace the TODO comment line with it</strong>. Every edit only adds code, so nothing else has to be removed or rewritten. Removing the comment is also what makes <code>./scripts/todos.sh</code> count the step as done.</p>
+
 <div class="label">Step 1 — Download the template</div>
 <p>The tests run with no keys and no network, so you can confirm the starting point works before changing anything.</p>
 <pre><code>git clone https://github.com/agent-trust-os/refund-agent-tutorial.git

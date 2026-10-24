@@ -145,7 +145,7 @@ Ticket T-1006: open -&gt; resolved
 <div id="steps" class="section">
 <h2>6 · Build it, step by step</h2>
 <p>You do not start from an empty folder. You <strong>clone</strong> (download a copy of) the project from GitHub. It already contains a working refund bot with no protection, plus a few helpers. Then you add the safety checkpoint, one file at a time.</p>
-<p>Every file below is shown <strong>in full</strong>. Lines on a <span class="legend">green</span> bar are the lines <em>you add</em>; everything else is already in the clone. In the real files, a comment like <code>TODO(AgentTrust 3/10)</code> marks the exact spot where a green block goes. Add the green lines there (you can delete the comment line). Every edit only adds code, so nothing has to be removed or rewritten. At any point, <code>./scripts/todos.sh</code> tells you how many are left.</p>
+<p>Every file below is shown <strong>in full</strong>. Lines on a <span class="legend">green</span> bar are the lines <em>you add</em>; everything else is already in the clone. In the real files, a comment like <code>TODO(AgentTrust 3/10)</code> marks the exact spot where a green block goes. Replace that comment line with the green lines. Every edit only adds code, so nothing else has to be removed or rewritten, and removing the comment is what makes <code>./scripts/todos.sh</code> count the step as done. At any point, <code>./scripts/todos.sh</code> tells you how many are left.</p>
 <p>You will need Python 3.12, a tool called <a href="https://docs.astral.sh/uv/">uv</a> (it installs Python packages) and an account at <code>https://console.agent-trust.tech</code>.</p>
 
 <div class="label">Step 1 — Clone the project and run it as it is</div>

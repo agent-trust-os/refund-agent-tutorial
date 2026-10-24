@@ -2,12 +2,13 @@
 inlining style.css, the code snippets (docs/guides/snippets) and the captured outputs (docs/guides/outputs).
 
 ``--check`` rebuilds in memory and fails if a page on disk differs, so a page cannot drift from the code.
-Placeholders: ``{{css}}``, ``{{snippet:NAME}}``, ``{{out:NAME}}``, ``{{file:PATH}}`` (a repo file, as is).
+Placeholders: ``{{css}}``, ``{{snippet:NAME}}``, ``{{out:NAME}}``, ``{{file:PATH}}`` (a repo file, as is), ``{{sol:PATH}}`` (a file as on the solution branch).
 """
 from __future__ import annotations
 
 import html
 import re
+import subprocess
 import sys
 from pathlib import Path
 
@@ -26,6 +27,14 @@ def repo_file(path: str) -> str:
     return f'<div class="path">{html.escape(path)}</div><pre><code>{html.escape(text)}</code></pre>'
 
 
+def solution_file(path: str) -> str:
+    """A file as it is on the ``solution`` branch, whatever branch is checked out."""
+    text = subprocess.run(["git", "show", f"solution:{path}"], cwd=HERE, check=True, capture_output=True,
+                          text=True).stdout
+    text = "\n".join(line for line in text.splitlines() if "TODO(AgentTrust" not in line).rstrip()
+    return f'<div class="path">{html.escape(path)}</div><pre><code>{html.escape(text)}</code></pre>'
+
+
 def output(name: str) -> str:
     return f"<pre><code>{html.escape((HERE / 'outputs' / f'{name}.txt').read_text().rstrip())}</code></pre>"
 
@@ -34,6 +43,7 @@ def render(source: Path) -> str:
     text = source.read_text()
     text = text.replace("{{css}}", (HERE / "style.css").read_text().strip())
     text = re.sub(r"\{\{snippet:([\w-]+)\}\}", lambda m: snippet(m.group(1)), text)
+    text = re.sub(r"\{\{sol:([\w./-]+)\}\}", lambda m: solution_file(m.group(1)), text)
     text = re.sub(r"\{\{file:([\w./-]+)\}\}", lambda m: repo_file(m.group(1)), text)
     return re.sub(r"\{\{out:([\w-]+)\}\}", lambda m: output(m.group(1)), text)
 

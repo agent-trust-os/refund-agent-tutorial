@@ -1,7 +1,7 @@
 """Apply the snippets in docs/guides/snippets to the repo, in file-name order: each replaces its
-``TODO(AgentTrust n/11)`` marker line (and ``replaces: k`` lines after it), keeping the marker's indentation.
+``TODO(AgentTrust n/10)`` marker line (and ``replaces: k`` lines after it), keeping the marker's indentation.
 
-    python docs/guides/apply_snippets.py [--only 1-7] [--root .]
+    python docs/guides/apply_snippets.py [--only 1-6] [--root .]
 """
 from __future__ import annotations
 
@@ -32,7 +32,7 @@ def apply(root: Path, first: int = 1, last: int = 99) -> list[str]:
             continue
         target = root / header["target"]
         lines = target.read_text().split("\n")
-        index = next(i for i, line in enumerate(lines) if f"TODO(AgentTrust {n}/11)" in line)
+        index = next(i for i, line in enumerate(lines) if f"TODO(AgentTrust {n}/10)" in line)
         indent = re.match(r"\s*", lines[index]).group(0)
         new = [indent + line if line else line for line in body]
         lines[index:index + 1 + int(header.get("replaces", 0))] = new
@@ -43,7 +43,7 @@ def apply(root: Path, first: int = 1, last: int = 99) -> list[str]:
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-    parser.add_argument("--only", default="1-99", help="marker range, for example 1-7")
+    parser.add_argument("--only", default="1-99", help="marker range, for example 1-6")
     parser.add_argument("--root", default=".")
     args = parser.parse_args()
     low, _, high = args.only.partition("-")

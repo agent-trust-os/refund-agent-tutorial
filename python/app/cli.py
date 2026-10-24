@@ -50,7 +50,7 @@ def show(result: RunResult) -> str:
         lines.append(f"Created ticket {t['ticket_id']} ({t['status']}): {t['body']}")
     if result.created_tickets:
         lines.append("")
-    # TODO(AgentTrust 11/11): print each decision's envelope id and its Console link. Paste from docs/guides/direct-api.html#todo-11
+    # TODO(AgentTrust 10/10): print each decision's envelope id and its Console link. Paste from docs/guides/direct-api.html#todo-10
     lines.append("Action log (what really ran):")
     lines += [f"  {n}. {a['tool']} {json.dumps(a['args'])}" for n, a in enumerate(result.actions, 1)] or ["  (nothing)"]
     return "\n".join(lines)
@@ -69,9 +69,9 @@ def main(argv: list[str] | None = None) -> int:
     ticket.add_argument("text")
     ticket.add_argument("--customer", required=True, help="for example C-1")
     ticket.add_argument("--order", default="", help="for example O-1001")
+    ticket.add_argument("--governed", choices=["harness", "client"], help="ask AgentTrust before each tool runs")
     listing = commands.add_parser("tickets", help="list tickets")
     listing.add_argument("--status", choices=["open", "resolved", "escalated"])
-    ticket.add_argument("--governed", choices=["harness", "client"], help="ask AgentTrust before each tool runs")
     commands.add_parser("reset", help="put the starting data back")
     agenttrust = commands.add_parser("agenttrust", help="AgentTrust helpers")
     agenttrust.add_argument("action", choices=["check"])

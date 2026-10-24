@@ -1,4 +1,0 @@
-# target: python/app/agents/support_agent.py
-# marker: 5
-# replaces: 1
-tools = make_tools(db, ticket_id, governed)

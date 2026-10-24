@@ -9,7 +9,7 @@ fail() { echo "FAIL step $1: $2" >&2; exit 1; }
 
 git clone -q --branch solution "$REPO" "$WORK/app"; cd "$WORK/app/python"
 step 1 "cloned the solution branch"
-[ "$(../scripts/todos.sh | head -1)" = "7 of 11 done" ] || fail 2 "solution should have TODOs 1 to 7 done"
+[ "$(../scripts/todos.sh | head -1)" = "6 of 10 done" ] || fail 2 "solution should have TODOs 1 to 6 done"
 uv sync --quiet 2>/dev/null; uv run --quiet pytest -q 2>&1 | tail -1 | grep -q passed || fail 2 "tests fail"
 step 2 "tests pass (blocks, fail closed, no PII, against the stub gateway)"
 python3 "$REPO/docs/guides/build.py" --check || fail 3 "build-governed-refund-bot.html is out of date"

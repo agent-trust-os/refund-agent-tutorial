@@ -50,4 +50,4 @@ def governed_harness(tool: Tool) -> Tool:
 
     return call
 
-# TODO(AgentTrust 8/11): add governed_client(fn): the same guard with AgentTrustClient. Paste from docs/guides/direct-api.html#todo-8
+# TODO(AgentTrust 7/10): add governed_client(fn): the same guard with AgentTrustClient. Paste from docs/guides/direct-api.html#todo-7

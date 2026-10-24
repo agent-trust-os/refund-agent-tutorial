@@ -106,16 +106,15 @@ Ticket T-1006: open -&gt; resolved
 
 <div id="components" class="section">
 <h2>5 · What we built</h2>
-<p>Seven numbered pieces. Each is a comment like <code>TODO(AgentTrust 3/11)</code> in the template; <code>./scripts/todos.sh</code> shows how many are still open. The app keeps working while you fill them in.</p>
+<p>Six numbered pieces. Each is a comment like <code>TODO(AgentTrust 3/10)</code> in the template; <code>./scripts/todos.sh</code> shows how many are still open. The app keeps working while you fill them in.</p>
 <table>
 <tr><th>#</th><th>What it is</th><th>File</th></tr>
 <tr><td>1</td><td>The gateway URL, key, agent id and failure mode, read from the environment.</td><td><code>app/core/config.py</code></td></tr>
 <tr><td>2</td><td>The SDK, pinned: <code>agentrust-py==0.0.4</code>.</td><td><code>pyproject.toml</code></td></tr>
 <tr><td>3</td><td><code>governed_harness</code>, the guard around one tool.</td><td><code>app/tools/governance.py</code></td></tr>
 <tr><td>4</td><td>Apply the guard to every tool, outside the action log.</td><td><code>app/tools/__init__.py</code></td></tr>
-<tr><td>5</td><td>Pass the mode from the agent loop to the tools.</td><td><code>app/agents/support_agent.py</code></td></tr>
-<tr><td>6</td><td><code>--governed harness</code> and <code>?governed=harness</code>.</td><td>CLI, service, route</td></tr>
-<tr><td>7</td><td>No SSN or card in a result; close the ticket if the first read is refused.</td><td><code>customers.py</code>, <code>rules.py</code></td></tr>
+<tr><td>5</td><td>No SSN or card number in a customer lookup result.</td><td><code>app/tools/customers.py</code></td></tr>
+<tr><td>6</td><td>Close the ticket when the very first read is refused.</td><td><code>app/llm/rules.py</code></td></tr>
 </table>
 <p>Also provided complete in the template: <code>refund-bot agenttrust check</code>, the two Console files in <code>python/policies/</code>, <code>scripts/todos.sh</code> and offline tests against a stand-in gateway. The finished code is on the <code>solution</code> branch.</p>
 </div>
@@ -195,23 +194,23 @@ ok purge_orders is blocked</code></pre>
 
 <div id="todo-1" class="label">Step 7 — TODO 1: read the AgentTrust settings</div>
 <p>The settings class reads everything from the environment. The failure mode defaults to <code>closed</code> here, so forgetting the variable never silently fails open.</p>
-<div class="path">python/app/core/config.py</div><pre><code>agentrust_gateway_url: str
+<div class="path">python/app/core/config.py: add this where the TODO comment is</div><pre><code>agentrust_gateway_url: str
 agentrust_key: str
 agentrust_agent_id: str
 agentrust_failure_mode: str</code></pre>
-<div class="path">python/app/core/config.py</div><pre><code>agentrust_gateway_url=os.environ.get(&quot;AGENTRUST_GATEWAY_URL&quot;, &quot;&quot;).rstrip(&quot;/&quot;),
+<div class="path">python/app/core/config.py: add this where the TODO comment is</div><pre><code>agentrust_gateway_url=os.environ.get(&quot;AGENTRUST_GATEWAY_URL&quot;, &quot;&quot;).rstrip(&quot;/&quot;),
 agentrust_key=os.environ.get(&quot;AGENTRUST_KEY&quot;, &quot;&quot;),
 agentrust_agent_id=os.environ.get(&quot;AGENTRUST_AGENT_ID&quot;, &quot;refund-bot&quot;),
 agentrust_failure_mode=os.environ.get(&quot;AGENTRUST_FAILURE_MODE&quot;, &quot;closed&quot;),</code></pre>
 
 <div id="todo-2" class="label">Step 8 — TODO 2: add the SDK</div>
 <p>Pinned to one version, so the behaviour described here does not change under you.</p>
-<div class="path">python/pyproject.toml</div><pre><code>&quot;agentrust-py==0.0.4&quot;,</code></pre>
+<div class="path">python/pyproject.toml: add this where the TODO comment is</div><pre><code>&quot;agentrust-py==0.0.4&quot;,</code></pre>
 <pre><code>uv sync</code></pre>
 
 <div id="todo-3" class="label">Step 9 — TODO 3: the guard</div>
 <p>This is the heart of the integration. <code>governed_harness</code> wraps one tool with <code>@harness</code> and turns the SDK's exceptions into plain tool results, so the agent loop and the model see a normal answer. Three of the options exist because the SDK's defaults would let a risky call through. If the gateway URL or key is missing, it refuses to start rather than send checks to your own app on port 8000.</p>
-<div class="path">python/app/tools/governance.py</div><pre><code>import functools
+<div class="path">python/app/tools/governance.py: add this where the TODO comment is</div><pre><code>import functools
 import os
 from typing import Any, Callable
 
@@ -263,38 +262,28 @@ def governed_harness(tool: Tool) -&gt; Tool:
 
 <div id="todo-4" class="label">Step 10 — TODO 4: apply the guard to each tool</div>
 <p>In <code>make_tools</code> the guard is applied <em>outside</em> the wrapper that writes the action log, so a blocked call never reaches the log. That is how you can tell what really ran.</p>
-<div class="path">python/app/tools/__init__.py</div><pre><code>if governed == &quot;harness&quot;:
+<div class="path">python/app/tools/__init__.py: add this where the TODO comment is</div><pre><code>if governed == &quot;harness&quot;:
     from .governance import governed_harness
 
     return governed_harness</code></pre>
+<div class="callout"><strong>The wiring is already done.</strong> The template already passes the <code>governed</code> option from the command line (<code>--governed harness</code>) and the web address (<code>?governed=harness</code>) down to <code>make_tools</code>. Until this step is done, asking for it stops with <code>unknown governed mode 'harness'</code>, so you can never think you are protected when you are not.</div>
 
-<div id="todo-5" class="label">Step 11 — TODO 5: pass the mode from the agent loop</div>
-<div class="path">python/app/agents/support_agent.py</div><pre><code>tools = make_tools(db, ticket_id, governed)</code></pre>
-
-<div id="todo-6" class="label">Step 12 — TODO 6: choose the mode per request</div>
-<p>Governance is off by default, so you can still reproduce the problem. Ask for it on the command line or in the URL.</p>
-<div class="path">python/app/cli.py</div><pre><code>ticket.add_argument(&quot;--governed&quot;, choices=[&quot;harness&quot;, &quot;client&quot;], help=&quot;ask AgentTrust before each tool runs&quot;)</code></pre>
-<div class="path">python/app/cli.py</div><pre><code>print(show(resolve_ticket(db, created[&quot;ticket_id&quot;], args.governed)))</code></pre>
-<div class="path">python/app/services/tickets.py</div><pre><code>return run(ticket_id, RuleModel(), db, governed=governed)</code></pre>
-<div class="path">python/app/api/routes/tickets.py</div><pre><code>return result_out(resolve_ticket(db, ticket_id, governed))</code></pre>
-
-<div id="todo-7" class="label">Step 13 — TODO 7: keep personal data out, and handle a refused read</div>
+<div id="todo-5" class="label">Step 11 — TODO 5: keep personal data out</div>
 <p>The customer lookup used to return the SSN and card number. The model never needs them, and once the model has seen them AgentTrust cannot take them back, so stop returning them.</p>
-<div class="path">python/app/tools/customers.py</div><pre><code>customer = orders.get_customer(ctx.db, customer_id)
-if customer:
+<div class="path">python/app/tools/customers.py: add this where the TODO comment is</div><pre><code>if customer:
     customer = {key: value for key, value in customer.items() if key not in (&quot;ssn&quot;, &quot;card_number&quot;)}</code></pre>
-<p>If the very first read is refused, the model never sees the ticket, so the mock model closes it by id instead of giving up silently.</p>
-<div class="path">python/app/llm/rules.py</div><pre><code>if self._failed:            # read_ticket was refused: close the ticket from the id in the request
-    if &quot;closed&quot; in self._done:
-        return FinalAnswer(ESCALATED_TEXT)
+
+<div id="todo-6" class="label">Step 12 — TODO 6: handle a refused first read</div>
+<p>If the very first read is refused, the model never sees the ticket, so the mock model closes it by its number instead of giving up silently. The new block sits above the existing check and only runs when the ticket was never read.</p>
+<div class="path">python/app/llm/rules.py: add this where the TODO comment is</div><pre><code>if self._failed and &quot;closed&quot; not in self._done:     # read_ticket was refused: close the ticket from the id in the request
     ticket_id = TICKET_ID.search(str(messages[0].content)).group(0)
     return &quot;update_ticket&quot;, {&quot;ticket_id&quot;: ticket_id, &quot;status&quot;: &quot;escalated&quot;, &quot;note&quot;: &quot;Passed to a colleague.&quot;}</code></pre>
 <pre><code>./scripts/todos.sh
-# 7 of 11 done   (8 to 11 belong to the direct API guide)
+# 6 of 10 done   (7 to 10 belong to the direct API guide)
 uv run pytest -q</code></pre>
-<p>The new tests run the whole bot against an offline stand-in for the gateway, so you can check the wiring without any network.</p>
+<p>The tests that were skipped until now run the whole bot against an offline stand-in for the gateway, so you can check the wiring without any network.</p>
 
-<div class="label">Step 14 — Run it, ticket by ticket</div>
+<div class="label">Step 13 — Run it, ticket by ticket</div>
 <p>Start the app and resolve each seeded ticket with AgentTrust asking first. Every output below was captured from a real run against a hosted gateway with the agent set up in the steps above.</p>
 <pre><code>uv run refund-bot serve &amp;
 curl -s -X POST "localhost:8000/tickets/T-1001/resolve?governed=harness"</code></pre>
@@ -365,7 +354,7 @@ answer I&#x27;ve passed your request to a colleague, who will reply within one d
 ticket escalated | Passed to a colleague.
 actions [&#x27;read_ticket&#x27;, &#x27;update_ticket&#x27;]</code></pre>
 
-<div class="label">Step 15 — See the decisions in the Console</div>
+<div class="label">Step 14 — See the decisions in the Console</div>
 <p>Open <strong>Events</strong> and filter by agent <code>refund-bot</code>. Each guarded call is a row with the decision, the reason and the arguments; click a row for its detail page. The T-1003 refund shows a block from the tool-trust hard gate, the T-1002 refund a block from the rule <code>refund_over_500</code>, and the T-1004 <code>read_ticket</code> row the post-check block. The user column reads <code>support-bot</code>. The execution stats on the agent panel count the same calls.</p>
 <div class="shot">Screenshot: Console, Events filtered to refund-bot (add yours)</div>
 <p>That's the whole setup. The bot's tools, loop and model are unchanged; the guard is purely a wrapper. The direct API guide covers the other connection mode, which also gives you an event id for each decision.</p>

@@ -21,7 +21,7 @@ def snippet(name: str) -> str:
     lines = (HERE / "snippets" / f"{name}.txt").read_text().splitlines()
     target = next(line.split(": ", 1)[1] for line in lines if line.startswith("# target: "))
     body = [line for line in lines if not re.match(r"# (target|marker|replaces): ", line)]
-    return (f'<div class="path">{html.escape(target)}: add this where the TODO comment is</div>'
+    return (f'<div class="path">{html.escape(target)}: replace the TODO comment with this</div>'
             f'<pre><code>{html.escape(chr(10).join(body))}</code></pre>')
 
 

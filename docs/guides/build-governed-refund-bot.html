@@ -250,7 +250,7 @@ ok purge_orders is blocked</code></pre>
 
 <div id="todo-2" class="label">Step 6 — Add the AgentTrust library (TODO 2)</div>
 <p>Open <code>pyproject.toml</code>, find the TODO 2 comment in the list of dependencies, and replace it with this line. We pin one exact version so nothing changes under you later.</p>
-<div class="path">python/pyproject.toml: add this where the TODO comment is</div><pre><code>&quot;agentrust-py==0.0.4&quot;,</code></pre>
+<div class="path">python/pyproject.toml: replace the TODO comment with this</div><pre><code>&quot;agentrust-py==0.0.4&quot;,</code></pre>
 <pre><code>uv sync</code></pre>
 <div class="callout"><strong>A note on names.</strong> You install the library as <code>agentrust-py</code> and import it as <code>agentrust_sdk</code>. A package called <code>agentrust-sdk</code> also exists, but it belongs to a different company. Do not install that one.</div>
 
@@ -287,12 +287,12 @@ ok purge_orders is blocked</code></pre>
 
 <div id="todo-5" class="label">Step 12 — Keep personal data out (TODO 5)</div>
 <p>The customer lookup used to return the social security number and card number. The model never needs them, and once a model has seen something no later check can take it back. The safest data is data it never receives.</p>
-<div class="path">python/app/tools/customers.py: add this where the TODO comment is</div><pre><code>if customer:
+<div class="path">python/app/tools/customers.py: replace the TODO comment with this</div><pre><code>if customer:
     customer = {key: value for key, value in customer.items() if key not in (&quot;ssn&quot;, &quot;card_number&quot;)}</code></pre>
 
 <div id="todo-6" class="label">Step 13 — Handle a refused first read (TODO 6)</div>
 <p>If the very first read is refused, the model never sees the ticket and would not know what to close. The rule-following model needs to close the ticket by its number instead of giving up silently. The new block sits above the existing check and only runs when the ticket was never read.</p>
-<div class="path">python/app/llm/rules.py: add this where the TODO comment is</div><pre><code>if self._failed and &quot;closed&quot; not in self._done:     # read_ticket was refused: close the ticket from the id in the request
+<div class="path">python/app/llm/rules.py: replace the TODO comment with this</div><pre><code>if self._failed and &quot;closed&quot; not in self._done:     # read_ticket was refused: close the ticket from the id in the request
     ticket_id = TICKET_ID.search(str(messages[0].content)).group(0)
     return &quot;update_ticket&quot;, {&quot;ticket_id&quot;: ticket_id, &quot;status&quot;: &quot;escalated&quot;, &quot;note&quot;: &quot;Passed to a colleague.&quot;}</code></pre>
 <p>Run <code>./scripts/todos.sh</code>. It should say <strong>6 of 10 done</strong>. (Items 7 to 10 belong to the other connection mode, the direct API guide.) Then run <code>uv run pytest -q</code>. The tests that were skipped until now run the whole bot against a pretend AgentTrust gateway included in the clone, so you can check the wiring without internet or an account.</p>

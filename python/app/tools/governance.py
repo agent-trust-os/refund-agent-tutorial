@@ -1,8 +1,4 @@
-"""AgentTrust governance for the tools. Until you fill in the TODOs below, the tools run ungoverned.
-
-``harness`` article: https://github.com/agent-trust-os/refund-agent-tutorial (docs/guides/harness.html)
-``direct-api`` article: docs/guides/direct-api.html
-"""
+"""AgentTrust governance for the tools: each tool is wrapped so AgentTrust is asked before it runs."""
 from __future__ import annotations
 
 import functools

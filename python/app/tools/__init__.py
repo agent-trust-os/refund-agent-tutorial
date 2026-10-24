@@ -1,4 +1,4 @@
-"""The tools the agent can call. This is where AgentTrust is added in phase 2.
+"""The tools the agent can call. This is where AgentTrust guards each tool.
 
 Each tool is a plain function in this folder whose first argument is a ``ToolContext`` (the database and the
 ticket being worked on). ``make_tools`` turns them into the functions the model sees:
@@ -48,7 +48,7 @@ def _guard(governed: str | None) -> Callable[[Tool], Tool]:
 
         return governed_harness
     # TODO(AgentTrust 9/11): guard them with the direct client when governed == "client". Paste from docs/guides/direct-api.html#todo-9
-    raise ValueError(f"governed={governed!r} is not set up yet: finish the AgentTrust TODOs first")
+    raise ValueError(f"unknown governed mode {governed!r}")
 
 
 def _for_the_model(tool: Tool, ctx: ToolContext) -> Tool:

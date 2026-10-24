@@ -2,13 +2,16 @@
 #   postgres  where tickets, orders and refunds live
 #   mailpit   catches every email the app sends and delivers none (web UI on port 8025)
 #   python    the Refund Bot app (API docs on http://localhost:8000/docs)
+#   langgraph the same agent on LangGraph, with its own database (API docs on http://localhost:8001/docs)
 #
 #   docker compose up -d --wait                      start everything
 #   docker compose --profile test run --rm test      run the tests against the real Postgres and Mailpit
+#   docker compose --profile test run --rm test-langgraph   the same for the LangGraph app
 #   docker compose down -v                           stop and delete the data
 #
 # Everything is bound to 127.0.0.1 and the credentials are throwaway demo values.
-# The app creates its own tables on start (Alembic), so there is no schema file to mount.
+# The apps create their own tables on start, so there is no schema file to mount. The databases "refund_test"
+# and "refund_langgraph" are made when the data volume is first created (run `down -v` once to get them).
 services:
   postgres:
     image: postgres:17-alpine
@@ -58,10 +61,47 @@ services:
       timeout: 3s
       retries: 10
 
+  langgraph:
+    build: ./frameworks/langgraph
+    image: refund-agent-tutorial-langgraph
+    environment:
+      DATABASE_URL: postgresql://refund:refund@postgres:5432/refund_langgraph
+      SMTP_HOST: mailpit
+      SMTP_PORT: "1025"
+      LLM_PROVIDER: ${LLM_PROVIDER:-mock}
+      ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:-}
+    depends_on:
+      postgres:
+        condition: service_healthy
+      mailpit:
+        condition: service_healthy
+    ports:
+      - "127.0.0.1:8001:8001"
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8001/health')"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
   test:
     profiles: ["test"]
     build: ./python
     image: refund-agent-tutorial-python
+    environment:
+      POSTGRES_TEST_URL: postgresql://refund:refund@postgres:5432/refund_test
+      MAILPIT_API: http://mailpit:8025
+      MAILPIT_SMTP_HOST: mailpit
+    depends_on:
+      postgres:
+        condition: service_healthy
+      mailpit:
+        condition: service_healthy
+    entrypoint: ["uv", "run", "--no-sync", "pytest", "-q"]
+
+  test-langgraph:
+    profiles: ["test"]
+    build: ./frameworks/langgraph
+    image: refund-agent-tutorial-langgraph
     environment:
       POSTGRES_TEST_URL: postgresql://refund:refund@postgres:5432/refund_test
       MAILPIT_API: http://mailpit:8025

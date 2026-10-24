@@ -38,7 +38,7 @@ uv run refund-bot ticket "My mug arrived chipped. Please refund \$25." --custome
 | Folder | What it is | State |
 |---|---|---|
 | [`python/`](python/) | The agent in plain Python: FastAPI, SQLAlchemy, a mock LLM | ready |
-| [`frameworks/langgraph/`](frameworks/langgraph/) | The same agent on LangGraph | planned |
+| [`frameworks/langgraph/`](frameworks/langgraph/) | The same agent on LangGraph: a graph, LangChain tools, FastAPI | ready |
 | [`frameworks/crewai/`](frameworks/crewai/) | The same agent on CrewAI | planned |
 
 Start with [`python/README.md`](python/README.md).

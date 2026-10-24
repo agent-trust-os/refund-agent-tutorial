@@ -6,6 +6,7 @@ Placeholders: ``{{css}}``, ``{{snippet:NAME}}``, ``{{out:NAME}}``, ``{{file:PATH
 """
 from __future__ import annotations
 
+import difflib
 import html
 import re
 import subprocess
@@ -27,12 +28,33 @@ def repo_file(path: str) -> str:
     return f'<div class="path">{html.escape(path)}</div><pre><code>{html.escape(text)}</code></pre>'
 
 
+BASELINES = ("feat/postgres-mailpit", "main")     # the template a reader clones; the first that exists is used
+
+
+def _git_show(ref: str, path: str) -> str | None:
+    result = subprocess.run(["git", "show", f"{ref}:{path}"], cwd=HERE, capture_output=True, text=True)
+    return result.stdout if result.returncode == 0 else None
+
+
+def _lines(text: str) -> list[str]:
+    return [line for line in text.splitlines() if "TODO(AgentTrust" not in line]
+
+
 def solution_file(path: str) -> str:
-    """A file as it is on the ``solution`` branch, whatever branch is checked out."""
-    text = subprocess.run(["git", "show", f"solution:{path}"], cwd=HERE, check=True, capture_output=True,
-                          text=True).stdout
-    text = "\n".join(line for line in text.splitlines() if "TODO(AgentTrust" not in line).rstrip()
-    return f'<div class="path">{html.escape(path)}</div><pre><code>{html.escape(text)}</code></pre>'
+    """A file as it is on the ``solution`` branch, in full. Lines that are not in the cloned template
+    (what you add after cloning) are marked green."""
+    final = _lines(_git_show("solution", path) or "")
+    base = next((ref for ref in BASELINES if _git_show(ref, "python/pyproject.toml")), BASELINES[-1])
+    before = _lines(_git_show(base, path) or "")
+    added = set()
+    for tag, _, _, j1, j2 in difflib.SequenceMatcher(None, before, final, autojunk=False).get_opcodes():
+        if tag in ("insert", "replace"):
+            added.update(range(j1, j2))
+    rows = "".join(
+        f'<span class="ln{" add" if i in added else ""}">{html.escape(line) or " "}</span>'
+        for i, line in enumerate(final))
+    note = ' <span class="legend">(green = lines you add)</span>' if added else ""
+    return f'<div class="path">{html.escape(path)}{note}</div><pre><code>{rows}</code></pre>'
 
 
 def output(name: str) -> str:

@@ -2,10 +2,11 @@
 inlining style.css, the code snippets (docs/guides/snippets) and the captured outputs (docs/guides/outputs).
 
 ``--check`` rebuilds in memory and fails if a page on disk differs, so a page cannot drift from the code.
-Placeholders: ``{{css}}``, ``{{snippet:NAME}}``, ``{{out:NAME}}``, ``{{file:PATH}}`` (a repo file, as is), ``{{sol:PATH}}`` (a file as on the solution branch).
+Placeholders: ``{{css}}``, ``{{snippet:NAME}}``, ``{{out:NAME}}``, ``{{asset:NAME}}`` (a file next to build.py, such as docs.css or docs.js), ``{{img:NAME}}`` (a picture from docs/guides/images, inlined as a data URI), ``{{file:PATH}}`` (a repo file, as is), ``{{sol:PATH}}`` (a file as on the solution branch).
 """
 from __future__ import annotations
 
+import base64
 import difflib
 import html
 import re
@@ -57,6 +58,13 @@ def solution_file(path: str) -> str:
     return f'<div class="path">{html.escape(path)}{note}</div><pre><code>{rows}</code></pre>'
 
 
+def image(name: str) -> str:
+    """A picture from docs/guides/images as a data URI, so a guide stays one self-contained file."""
+    path = next((HERE / "images").glob(f"{name}.*"))
+    mime = {".webp": "image/webp", ".png": "image/png", ".jpg": "image/jpeg"}[path.suffix]
+    return f"data:{mime};base64,{base64.b64encode(path.read_bytes()).decode()}"
+
+
 def output(name: str) -> str:
     return f"<pre><code>{html.escape((HERE / 'outputs' / f'{name}.txt').read_text().rstrip())}</code></pre>"
 
@@ -64,6 +72,8 @@ def output(name: str) -> str:
 def render(source: Path) -> str:
     text = source.read_text()
     text = text.replace("{{css}}", (HERE / "style.css").read_text().strip())
+    text = re.sub(r"\{\{asset:([\w.-]+)\}\}", lambda m: (HERE / m.group(1)).read_text().strip(), text)
+    text = re.sub(r"\{\{img:([\w-]+)\}\}", lambda m: image(m.group(1)), text)
     text = re.sub(r"\{\{snippet:([\w-]+)\}\}", lambda m: snippet(m.group(1)), text)
     text = re.sub(r"\{\{sol:([\w./-]+)\}\}", lambda m: solution_file(m.group(1)), text)
     text = re.sub(r"\{\{file:([\w./-]+)\}\}", lambda m: repo_file(m.group(1)), text)
